@@ -8,13 +8,20 @@
     "clean": "hardhat clean",
     "node": "hardhat node"
   },
-  "keywords": ["solidity", "ethereum", "erc20", "erc721", "nft"],
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "erc20",
+    "erc721",
+    "nft"
+  ],
   "author": "mlhang199",
   "license": "MIT",
   "type": "module",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^3.0.0",
     "@nomicfoundation/hardhat-ethers": "^4.0.11",
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-verify": "^3.0.17",
     "@types/node": "^25.7.0",
     "chai": "^6.2.2",

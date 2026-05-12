@@ -1,8 +1,8 @@
 import { configVariable, defineConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-ethers";
-import "@nomicfoundation/hardhat-verify";
+import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 
 export default defineConfig({
+  plugins: [hardhatToolboxMochaEthers],
   solidity: {
     version: "0.8.28",
     settings: {
@@ -14,7 +14,9 @@ export default defineConfig({
   },
   paths: {
     sources: "./src",
-    tests: "./test",
+    tests: {
+      mocha: "./test",
+    },
     cache: "./cache",
     artifacts: "./artifacts",
   },
@@ -33,6 +35,11 @@ export default defineConfig({
   etherscan: {
     apiKey: {
       sepolia: configVariable("ETHERSCAN_API_KEY"),
+    },
+  },
+  test: {
+    mocha: {
+      timeout: 40_000,
     },
   },
 });
