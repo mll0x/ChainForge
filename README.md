@@ -65,7 +65,7 @@ ChainForge/
 ### 1. 克隆项目
 
 ```bash
-git clone git@github.com:mlhang199/ChainForge.git
+git clone git@github.com:mll0x/ChainForge.git
 cd ChainForge
 ```
 
