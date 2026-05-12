@@ -15,7 +15,7 @@
 
 | 层 | 技术 | 说明 |
 |---|---|---|
-| 智能合约 | Solidity + Foundry | 合约开发、测试、部署 |
+| 智能合约 | Solidity + Hardhat | 合约开发、测试、部署 |
 | 合约库 | OpenZeppelin | 安全的 ERC-20/721 标准实现 |
 | 后端 | Java 17 + Spring Boot + Web3j | 合约调用、交易签名、API 服务 |
 | 前端 | React + Wagmi + RainbowKit | 钱包连接、DApp 交互 |
@@ -25,13 +25,15 @@
 ## 项目结构
 
 ```
-nft-demo/
-├── contracts/          # Solidity 智能合约 (Foundry 项目)
+ChainForge/
+├── contracts/          # Solidity 智能合约 (Hardhat 项目)
 │   ├── src/
 │   │   ├── MyToken.sol # ERC-20 Token 合约
 │   │   └── MyNFT.sol   # ERC-721 NFT 合约
 │   ├── test/           # 合约测试
-│   └── script/         # 部署脚本
+│   ├── scripts/        # 部署脚本
+│   ├── ignition/       # Hardhat Ignition 部署模块
+│   └── hardhat.config.ts
 ├── backend/            # Java 后端 (Spring Boot + Web3j)
 │   └── src/main/java/com/nftdemo/
 │       ├── config/     # Web3j 配置
@@ -57,7 +59,7 @@ nft-demo/
 
 - JDK 17+
 - Node.js 20+
-- Foundry (forge + cast + anvil)
+- Hardhat 3 (npm install)
 - MetaMask 浏览器插件
 
 ### 1. 克隆项目
@@ -71,9 +73,9 @@ cd ChainForge
 
 ```bash
 cd contracts
-forge install
-forge build
-forge test
+npm install
+npx hardhat compile
+npx hardhat test
 ```
 
 ### 3. 后端启动
@@ -139,7 +141,7 @@ npm run dev
 - [Solidity 官方文档](https://soliditylang.org/)
 - [CryptoZombies](https://cryptozombies.io/) — 交互式 Solidity 入门
 - [Web3j 文档](https://docs.web3j.io/)
-- [Foundry Book](https://book.getfoundry.sh/)
+- [Hardhat 文档](https://hardhat.org/docs)
 - [OpenZeppelin 文档](https://docs.openzeppelin.com/)
 - [Ethereum 开发者文档](https://ethereum.org/developers)
 

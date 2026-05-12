@@ -13,8 +13,13 @@ backend/target/
 *.jar
 *.war
 
-# Foundry
+# Hardhat
 contracts/cache/
+contracts/artifacts/
+contracts/dist/
+contracts/typechain-types/
+
+# Foundry (if needed later)
 contracts/out/
 
 # OS
