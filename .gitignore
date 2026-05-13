@@ -28,6 +28,10 @@ contracts/out/
 .DS_Store
 Thumbs.db
 
+# Docs (local only)
+周计划-*.md
+链上开发环境配置指南.html
+
 # IDE
 .idea/
 .vscode/
