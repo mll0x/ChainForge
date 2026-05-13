@@ -18,6 +18,8 @@ contracts/cache/
 contracts/artifacts/
 contracts/dist/
 contracts/typechain-types/
+contracts/types/
+contracts/ignition/deployments/
 
 # Foundry (if needed later)
 contracts/out/

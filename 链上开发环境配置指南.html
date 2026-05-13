@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>链上开发环境配置指南 — Java 开发者入门 Web3</title>
+    <style>
+        :root {
+            --color-bg: #0d1117;
+            --color-surface: #161b22;
+            --color-surface2: #1c2333;
+            --color-border: #30363d;
+            --color-text: #e6edf3;
+            --color-text2: #8b949e;
+            --color-accent: #58a6ff;
+            --color-green: #3fb950;
+            --color-orange: #d29922;
+            --color-red: #f85149;
+            --color-purple: #bc8cff;
+            --color-pink: #f778ba;
+            --color-cyan: #79c0ff;
+            --color-yellow: #e3b341;
+            --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 6rem;
+        }
+
+        /* Header */
+        .hero {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 3rem;
+        }
+        .hero h1 {
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--color-accent), var(--color-purple), var(--color-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .hero .subtitle {
+            color: var(--color-text2);
+            font-size: 1.05rem;
+        }
+        .hero .badges {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid;
+        }
+        .badge-java { color: var(--color-orange); border-color: var(--color-orange); background: rgba(210,153,34,0.1); }
+        .badge-solidity { color: var(--color-cyan); border-color: var(--color-cyan); background: rgba(121,192,255,0.1); }
+        .badge-erc20 { color: var(--color-green); border-color: var(--color-green); background: rgba(63,185,80,0.1); }
+        .badge-erc721 { color: var(--color-purple); border-color: var(--color-purple); background: rgba(188,140,255,0.1); }
+
+        /* Navigation */
+        .toc {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 3rem;
+        }
+        .toc h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text2); margin-bottom: 1rem; }
+        .toc ol {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.4rem 1.5rem;
+            counter-reset: toc;
+        }
+        .toc li { counter-increment: toc; }
+        .toc a {
+            color: var(--color-accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+        }
+        .toc a::before { content: counter(toc) "."; color: var(--color-text2); min-width: 1.6em; }
+        .toc a:hover { text-decoration: underline; }
+
+        /* Sections */
+        .section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 2rem;
+        }
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section h2 .num {
+            color: var(--color-accent);
+            font-weight: 800;
+        }
+        .section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.7rem;
+            color: var(--color-cyan);
+        }
+        .section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem;
+            color: var(--color-purple);
+        }
+        .section p { margin-bottom: 0.8rem; }
+
+        /* Alert / Callout */
+        .callout {
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+            font-size: 0.92rem;
+        }
+        .callout-info { background: rgba(88,166,255,0.08); border-color: var(--color-accent); }
+        .callout-warn { background: rgba(210,153,34,0.08); border-color: var(--color-orange); }
+        .callout-danger { background: rgba(248,81,73,0.08); border-color: var(--color-red); }
+        .callout-tip { background: rgba(63,185,80,0.08); border-color: var(--color-green); }
+        .callout strong { display: block; margin-bottom: 0.2rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border: 1px solid var(--color-border);
+        }
+        th {
+            background: var(--color-surface2);
+            font-weight: 600;
+            color: var(--color-accent);
+            white-space: nowrap;
+        }
+        td { background: var(--color-surface); }
+        td code { font-size: 0.85rem; }
+
+        /* Code */
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            background: var(--color-surface2);
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            color: var(--color-cyan);
+        }
+        pre {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--color-text);
+        }
+        .code-label {
+            font-size: 0.75rem;
+            color: var(--color-text2);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.3rem;
+        }
+
+        /* Architecture diagram */
+        .arch-diagram {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--color-text2);
+        }
+        .arch-diagram .hl-accent { color: var(--color-accent); }
+        .arch-diagram .hl-green { color: var(--color-green); }
+        .arch-diagram .hl-purple { color: var(--color-purple); }
+        .arch-diagram .hl-orange { color: var(--color-orange); }
+        .arch-diagram .hl-pink { color: var(--color-pink); }
+
+        /* Project cards */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .project-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            padding: 1.2rem;
+            transition: border-color 0.2s;
+        }
+        .project-card:hover { border-color: var(--color-accent); }
+        .project-card .name {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .project-card .name a { color: var(--color-accent); text-decoration: none; }
+        .project-card .name a:hover { text-decoration: underline; }
+        .project-card .desc { color: var(--color-text2); font-size: 0.88rem; margin-bottom: 0.6rem; }
+        .project-card .tags { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+        .project-card .tag {
+            font-size: 0.72rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: var(--color-surface2);
+            color: var(--color-text2);
+            border: 1px solid var(--color-border);
+        }
+
+        /* Flow diagram */
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        .flow-step {
+            background: var(--color-surface2);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 0.3rem 0.7rem;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+        }
+        .flow-arrow { color: var(--color-text2); }
+
+        /* Checklist */
+        .checklist { list-style: none; margin: 0.5rem 0; }
+        .checklist li { padding: 0.3rem 0; font-size: 0.92rem; }
+        .checklist li::before { content: "☐ "; color: var(--color-text2); }
+
+        /* Comparison tabs */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        @media (max-width: 640px) { .compare-grid { grid-template-columns: 1fr; } }
+        .compare-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            padding: 1.2rem;
+        }
+        .compare-card h4 { margin-top: 0; }
+        .compare-card.recommended { border-color: var(--color-green); }
+        .compare-card .rec-badge {
+            display: inline-block;
+            background: rgba(63,185,80,0.15);
+            color: var(--color-green);
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-left: 0.3rem;
+        }
+
+        /* FAQ */
+        .faq-item { margin: 1rem 0; }
+        .faq-q {
+            font-weight: 600;
+            color: var(--color-orange);
+            margin-bottom: 0.3rem;
+        }
+        .faq-a { color: var(--color-text2); font-size: 0.92rem; padding-left: 1rem; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .toc ol { grid-template-columns: 1fr; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>链上开发环境配置指南</h1>
+        <p class="subtitle">Java 开发者入门 Web3 — 三阶段路线：合约基础 → DeFi/AMM → EVM/MEV</p>
+        <div class="badges">
+            <span class="badge badge-java">Java / Web3j</span>
+            <span class="badge badge-solidity">Solidity</span>
+            <span class="badge badge-erc20">ERC-20 Token</span>
+            <span class="badge badge-erc721">ERC-721 NFT</span>
+            <span class="badge badge-java">Uniswap V2</span>
+            <span class="badge badge-solidity">EVM / MEV</span>
+        </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="toc">
+        <h2>目录</h2>
+        <ol>
+            <li><a href="#overview">概述与架构</a></li>
+            <li><a href="#basics">Web3 核心概念速览</a></li>
+            <li><a href="#env">基础环境配置</a></li>
+            <li><a href="#solidity">Solidity 智能合约开发</a></li>
+            <li><a href="#erc20">ERC-20 Token 发行</a></li>
+            <li><a href="#erc721">ERC-721 NFT 铸造</a></li>
+            <li><a href="#java">Java / Web3j 链交互</a></li>
+            <li><a href="#testnet">测试网与部署</a></li>
+            <li><a href="#wallet">钱包集成</a></li>
+            <li><a href="#security">安全最佳实践</a></li>
+            <li><a href="#projects">推荐借鉴项目</a></li>
+            <li><a href="#learning">学习路线与资源</a></li>
+            <li><a href="#defi">第二阶段：DeFi 与 AMM 深入</a></li>
+            <li><a href="#evm-deep">第三阶段：EVM 底层与 MEV</a></li>
+            <li><a href="#faq">常见问题</a></li>
+        </ol>
+    </nav>
+
+    <!-- 1. 概述 -->
+    <section class="section" id="overview">
+        <h2><span class="num">1</span> 概述与架构</h2>
+
+        <p>本文档面向 Java 后端开发者，目标是<strong>从零搭建一个能发行 ERC-20 Token 和 ERC-721 NFT 的完整链上交互 Demo</strong>。技术栈以 Java + Solidity 为主，不引入不必要的语言。</p>
+
+        <div class="callout callout-tip">
+            <strong>为什么不用 Python + Rust？</strong>
+            你是 Java 开发者，Web3j 是以太坊官方维护的 Java SDK，Spring Boot 集成成熟，无需额外学习新语言。Demo 阶段 Java + Solidity 完全够用。
+        </div>
+
+        <h3>语言职责分工</h3>
+        <table>
+            <thead>
+                <tr><th>语言</th><th>职责</th><th>核心工具</th><th>说明</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Java</strong></td><td>后端服务 / 链交互</td><td>Web3j + Spring Boot</td><td>合约调用、交易签名、API 服务</td></tr>
+                <tr><td><strong>Solidity</strong></td><td>智能合约</td><td>Foundry / Hardhat</td><td>链上逻辑：Token 标准、NFT 铸造</td></tr>
+                <tr><td>TypeScript</td><td>前端（可选）</td><td>React + Viem/Wagmi</td><td>DApp 用户界面、钱包连接</td></tr>
+            </tbody>
+        </table>
+
+        <h3>架构图</h3>
+        <div class="arch-diagram">
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-accent">Frontend</span>   React + Wagmi (MetaMask 钱包连接)          │
+ │  (可选，可用 Postman / 单元测试替代)                        │
+ └─────────────┬────────────────────────────────────────────┘
+               │ REST API
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-orange">Java 后端</span>  Spring Boot + Web3j                        │
+ │  · 合约调用封装   · 交易签名   · 事件监听   · API 暴露     │
+ └─────────────┬────────────────────────────────────────────┘
+               │ JSON-RPC (HTTPS / WSS)
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-green">RPC 节点</span>   Alchemy / Infura / 自建节点                  │
+ │  (Ethereum Sepolia 测试网 或 主网)                        │
+ └─────────────┬────────────────────────────────────────────┘
+               │ EVM 执行
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-purple">智能合约</span>  Solidity (ERC-20 / ERC-721)                 │
+ │  OpenZeppelin 合约库 + Foundry 编译部署                   │
+ └──────────────────────────────────────────────────────────┘</div>
+    </section>
+
+    <!-- 2. Web3 核心概念 -->
+    <section class="section" id="basics">
+        <h2><span class="num">2</span> Web3 核心概念速览</h2>
+        <p>作为 Java 开发者，以下概念可以类比你熟悉的后端体系：</p>
+
+        <table>
+            <thead>
+                <tr><th>Web3 概念</th><th>简单解释</th><th>Java 类比</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>区块链</strong></td><td>不可篡改的分布式账本</td><td>只追加的分布式数据库</td></tr>
+                <tr><td><strong>智能合约</strong></td><td>部署在链上自动执行的程序</td><td>存储过程 / Service 层（无法修改已部署版本）</td></tr>
+                <tr><td><strong>Gas</strong></td><td>执行链上操作的手续费</td><td>云函数调用的计费单位</td></tr>
+                <tr><td><strong>钱包</strong></td><td>管理私钥、签名交易的工具</td><td>认证模块 + 密钥管理</td></tr>
+                <tr><td><strong>RPC 节点</strong></td><td>区块链网络的读写入口</td><td>数据库连接池 / API Gateway</td></tr>
+                <tr><td><strong>ERC-20</strong></td><td>同质化代币标准（Fungible Token）</td><td>积分系统 / 虚拟货币</td></tr>
+                <tr><td><strong>ERC-721</strong></td><td>非同质化代币标准（NFT）</td><td>唯一资产证书 / 数字产权</td></tr>
+                <tr><td><strong>ERC-1155</strong></td><td>多代币标准（半同质化）</td><td>批量资产管理</td></tr>
+                <tr><td><strong>ABI</strong></td><td>合约接口描述（JSON）</td><td>接口定义 / WSDL / OpenAPI</td></tr>
+                <tr><td><strong>交易 Transaction</strong></td><td>链上状态变更操作</td><td>数据库写事务（但确认需 12-30 秒）</td></tr>
+                <tr><td><strong>事件 Event</strong></td><td>合约发出的日志</td><td>消息队列 / 数据库触发器</td></tr>
+                <tr><td><strong>测试网 Testnet</strong></td><td>模拟主网的免费测试环境</td><td>Staging 环境</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-warn">
+            <strong>关键心智模型差异</strong>
+            <ul style="margin:0.3rem 0 0 1.2rem">
+                <li>智能合约部署后<strong>不可修改</strong>，只能重新部署新版本（可使用代理模式升级）</li>
+                <li>交易是<strong>异步确认</strong>的，不是即时生效</li>
+                <li>所有链上操作都要花 Gas，读取数据免费</li>
+                <li>私钥丢失 = 资产丢失，没有"找回密码"</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- 3. 基础环境 -->
+    <section class="section" id="env">
+        <h2><span class="num">3</span> 基础环境配置</h2>
+
+        <h3>3.1 JDK（必需）</h3>
+        <div class="code-label">终端</div>
+        <pre><code># 推荐 JDK 17+（LTS）
+# macOS
+brew install openjdk@17
+
+# 验证
+java -version
+# openjdk version "17.0.x"</code></pre>
+
+        <h3>3.2 Node.js（合约开发工具链依赖）</h3>
+        <div class="code-label">终端</div>
+        <pre><code>brew install node
+
+# 验证
+node -v   # v20+
+npm -v</code></pre>
+
+        <h3>3.3 Git</h3>
+        <div class="code-label">终端</div>
+        <pre><code>brew install git
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"</code></pre>
+
+        <h3>3.4 MetaMask 钱包</h3>
+        <p>安装浏览器插件：<a href="https://metamask.io" style="color:var(--color-accent)">https://metamask.io</a></p>
+        <ul style="margin-left:1.2rem">
+            <li>创建钱包 → 备份助记词（12 个单词，离线保存）</li>
+            <li>切换到 Sepolia 测试网</li>
+            <li>通过水龙头获取测试 ETH</li>
+        </ul>
+
+        <h3>3.5 环境验证清单</h3>
+        <ul class="checklist">
+            <li>JDK 17+ 已安装</li>
+            <li>Node.js 20+ 已安装</li>
+            <li>MetaMask 已安装并创建钱包</li>
+            <li>已在 MetaMask 切换到 Sepolia 测试网</li>
+            <li>已获取测试 ETH（见第八节）</li>
+            <li>Alchemy 或 Infura 账号已注册</li>
+        </ul>
+    </section>
+
+    <!-- 4. Solidity -->
+    <section class="section" id="solidity">
+        <h2><span class="num">4</span> Solidity 智能合约开发</h2>
+
+        <h3>4.1 开发框架选择</h3>
+        <div class="compare-grid">
+            <div class="compare-card recommended">
+                <h4>Foundry <span class="rec-badge">推荐</span></h4>
+                <p style="font-size:0.88rem;color:var(--color-text2)">Rust 实现，编译速度快 10x+，内置 Solidity 测试，内置部署工具，内置模糊测试。</p>
+                <ul style="font-size:0.85rem;margin:0.5rem 0 0 1rem;color:var(--color-text2)">
+                    <li>forge build / test / deploy</li>
+                    <li>cast 链交互命令行</li>
+                    <li>anvil 本地测试链</li>
+                </ul>
+            </div>
+            <div class="compare-card">
+                <h4>Hardhat</h4>
+                <p style="font-size:0.88rem;color:var(--color-text2)">JavaScript 生态，插件丰富，社区大，调试方便，但编译慢。</p>
+                <ul style="font-size:0.85rem;margin:0.5rem 0 0 1rem;color:var(--color-text2)">
+                    <li>npx hardhat compile / test</li>
+                    <li>Ethers.js 集成</li>
+                    <li>插件生态成熟</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>4.2 安装 Foundry</h3>
+        <div class="code-label">终端</div>
+        <pre><code># 安装 foundryup
+curl -L https://foundry.paradigm.xyz | bash
+source ~/.zshrc   # 或 ~/.bashrc
+foundryup
+
+# 验证
+forge --version
+cast --version
+anvil --version</code></pre>
+
+        <h3>4.3 安装 OpenZeppelin 合约库</h3>
+        <div class="callout callout-info">
+            <strong>OpenZeppelin 是什么？</strong>
+            经过审计的安全合约库，提供 ERC-20、ERC-721 等标准实现。永远不要从零手写代币合约，直接继承 OpenZeppelin 即可。
+        </div>
+        <div class="code-label">终端 — 在 Foundry 项目中安装</div>
+        <pre><code>forge init my-nft-demo
+cd my-nft-demo
+forge install OpenZeppelin/openzeppelin-contracts</code></pre>
+
+        <h3>4.4 VSCode 推荐扩展</h3>
+        <table>
+            <thead><tr><th>扩展</th><th>作者</th><th>功能</th></tr></thead>
+            <tbody>
+                <tr><td>Solidity</td><td>Juan Blanco</td><td>语法高亮、代码补全、编译检查</td></tr>
+                <tr><td>Hardhat Solidity</td><td>Nomic Foundation</td><td>格式化、跳转定义</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 5. ERC-20 -->
+    <section class="section" id="erc20">
+        <h2><span class="num">5</span> ERC-20 Token 发行</h2>
+
+        <h3>5.1 ERC-20 标准接口</h3>
+        <div class="code-label">Solidity — ERC-20 核心方法</div>
+        <pre><code>// 以下是你必须理解的核心方法
+function totalSupply() external view returns (uint256);       // 总供应量
+function balanceOf(address account) external view returns (uint256); // 查余额
+function transfer(address to, uint256 amount) external returns (bool); // 转账
+function approve(address spender, uint256 amount) external returns (bool); // 授权
+function transferFrom(address from, address to, uint256 amount) external returns (bool); // 授权转账
+
+event Transfer(address indexed from, address indexed to, uint256 value);
+event Approval(address indexed owner, address indexed spender, uint256 value);</code></pre>
+
+        <h3>5.2 使用 OpenZeppelin 编写 Token 合约</h3>
+        <div class="code-label">Solidity — src/MyToken.sol</div>
+        <pre><code>// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract MyToken is ERC20, Ownable {
+    constructor(
+        string memory name,       // "My Demo Token"
+        string memory symbol,     // "MDT"
+        uint256 initialSupply     // 1000000 (100万枚)
+    ) ERC20(name, symbol) Ownable(msg.sender) {
+        // mint 给部署者，decimals 默认 18
+        _mint(msg.sender, initialSupply * 10 ** decimals());
+    }
+
+    // 只有 owner 能增发
+    function mint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
+    }
+}</code></pre>
+
+        <h3>5.3 编译与测试</h3>
+        <div class="code-label">终端</div>
+        <pre><code># 编译
+forge build
+
+# 运行测试
+forge test
+
+# 启动本地测试链
+anvil --port 8545
+
+# 部署到本地链
+forge create src/MyToken.sol:MyToken \
+    --constructor-args "My Demo Token" "MDT" 1000000 \
+    --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+    --rpc-url http://localhost:8545</code></pre>
+
+        <div class="callout callout-warn">
+            <strong>上面的私钥是 Anvil 默认测试账号</strong>
+            切勿在主网使用。Anvil 启动时会打印 10 个测试账号及其私钥。
+        </div>
+    </section>
+
+    <!-- 6. ERC-721 -->
+    <section class="section" id="erc721">
+        <h2><span class="num">6</span> ERC-721 NFT 铸造</h2>
+
+        <h3>6.1 ERC-721 核心概念</h3>
+        <table>
+            <thead><tr><th>概念</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>tokenId</td><td>每个 NFT 的唯一编号（uint256）</td></tr>
+                <tr><td>tokenURI</td><td>指向 NFT 元数据的 URL（JSON：名称、描述、图片）</td></tr>
+                <tr><td>mint</td><td>铸造新 NFT 的操作</td></tr>
+                <tr><td>ownerOf</td><td>查询某个 tokenId 的持有者</td></tr>
+            </tbody>
+        </table>
+
+        <h3>6.2 NFT 元数据标准 (ERC-721 Metadata)</h3>
+        <div class="code-label">JSON — tokenURI 指向的内容</div>
+        <pre><code>{
+    "name": "My NFT #1",
+    "description": "A demo NFT for learning Web3",
+    "image": "ipfs://Qm.../image.png",
+    "attributes": [
+        { "trait_type": "Rarity", "value": "Common" },
+        { "trait_type": "Power", "value": 42 }
+    ]
+}</code></pre>
+
+        <div class="callout callout-info">
+            <strong>元数据存储</strong>
+            图片和 JSON 文件通常上传到 IPFS（去中心化存储），通过 CID 引用。推荐使用 <a href="https://pinata.cloud" style="color:var(--color-accent)">Pinata</a> 或 <a href="https://nft.storage" style="color:var(--color-accent)">nft.storage</a> 免费托管。
+        </div>
+
+        <h3>6.3 编写 NFT 合约</h3>
+        <div class="code-label">Solidity — src/MyNFT.sol</div>
+        <pre><code>// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract MyNFT is ERC721, Ownable {
+    uint256 private _nextTokenId;
+    string private _baseTokenURI;
+
+    constructor(
+        string memory name,       // "My Demo NFT"
+        string memory symbol,     // "MDN"
+        string memory baseURI     // "ipfs://Qm.../" 或 "https://api.example.com/metadata/"
+    ) ERC721(name, symbol) Ownable(msg.sender) {
+        _baseTokenURI = baseURI;
+    }
+
+    // 铸造 NFT 给指定地址
+    function mint(address to) external onlyOwner returns (uint256) {
+        uint256 tokenId = _nextTokenId++;
+        _safeMint(to, tokenId);
+        return tokenId;
+    }
+
+    // 批量铸造
+    function batchMint(address to, uint256 quantity) external onlyOwner {
+        for (uint256 i = 0; i < quantity; i++) {
+            uint256 tokenId = _nextTokenId++;
+            _safeMint(to, tokenId);
+        }
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
+    }
+
+    function setBaseURI(string memory baseURI) external onlyOwner {
+        _baseTokenURI = baseURI;
+    }
+}</code></pre>
+
+        <h3>6.4 ERC-721 vs ERC-1155</h3>
+        <table>
+            <thead><tr><th>特性</th><th>ERC-721</th><th>ERC-1155</th></tr></thead>
+            <tbody>
+                <tr><td>类型</td><td>纯非同质化</td><td>多代币（同质化 + 非同质化）</td></tr>
+                <tr><td>一次转账</td><td>1 个 NFT</td><td>多个不同类型代币</td></tr>
+                <tr><td>Gas</td><td>较高</td><td>批量操作更省 Gas</td></tr>
+                <tr><td>适用场景</td><td>艺术品、收藏品</td><td>游戏道具、半同质化票据</td></tr>
+                <tr><td>入门推荐</td><td>先学这个</td><td>理解 721 后再学</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 7. Java / Web3j -->
+    <section class="section" id="java">
+        <h2><span class="num">7</span> Java / Web3j 链交互</h2>
+
+        <h3>7.1 项目搭建（Spring Boot + Web3j）</h3>
+        <div class="code-label">Maven — pom.xml 关键依赖</div>
+        <pre><code>&lt;dependencies&gt;
+    &lt;!-- Web3j 核心 --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.web3j&lt;/groupId&gt;
+        &lt;artifactId&gt;core&lt;/artifactId&gt;
+        &lt;version&gt;4.12.2&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;!-- Spring Boot --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+
+    &lt;!-- 可选：web3j Spring Boot Starter --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.web3j&lt;/groupId&gt;
+        &lt;artifactId&gt;web3j-spring-boot-starter&lt;/artifactId&gt;
+        &lt;version&gt;1.6.0&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;</code></pre>
+
+        <h3>7.2 从 ABI 生成 Java 合约包装类</h3>
+        <div class="callout callout-info">
+            <strong>这是 Web3j 的核心工作流</strong>
+            用合约编译产出的 ABI + BIN 文件，自动生成 Java 类，之后在 Java 中像调用普通对象一样调用合约方法。
+        </div>
+        <div class="code-label">终端 — 使用 Web3j 命令行工具</div>
+        <pre><code># 安装 web3j CLI
+brew install web3j
+
+# 从 Foundry 编译产物生成 Java 类
+web3j generate solidity \
+    -a out/MyToken.sol/MyToken.abi.json \
+    -b out/MyToken.sol/MyToken.bin \
+    -o src/main/java \
+    -p com.example.web3.contract</code></pre>
+
+        <p>生成后在 <code>com.example.web3.contract</code> 包下会出现 <code>MyToken.java</code>，封装了所有合约方法的 Java 调用。</p>
+
+        <h3>7.3 连接节点 & 查询余额</h3>
+        <div class="code-label">Java</div>
+        <pre><code>@Service
+public class Web3Service {
+
+    private final Web3j web3j;
+
+    public Web3Service() {
+        // 连接 RPC 节点
+        this.web3j = Web3j.build(new HttpService("https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY"));
+    }
+
+    // 查询 ETH 余额
+    public BigDecimal getEthBalance(String address) throws Exception {
+        EthGetBalance balance = web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
+        return Convert.fromWei(balance.getBalance().toString(), Unit.ETHER);
+    }
+
+    // 查询 ERC-20 余额
+    public BigInteger getErc20Balance(String contractAddress, String walletAddress) throws Exception {
+        MyToken token = MyToken.load(
+            contractAddress, web3j, Credentials.create("PRIVATE_KEY"),
+            new DefaultGasProvider()
+        );
+        return token.balanceOf(walletAddress).send();
+    }
+}</code></pre>
+
+        <h3>7.4 调用合约 — 转账 Token</h3>
+        <div class="code-label">Java</div>
+        <pre><code>public String transferToken(String contractAddress, String privateKey,
+                            String to, BigInteger amount) throws Exception {
+
+    Credentials credentials = Credentials.create(privateKey);
+    MyToken token = MyToken.load(contractAddress, web3j, credentials, new DefaultGasProvider());
+
+    // 调用合约的 transfer 方法
+    TransactionReceipt receipt = token.transfer(to, amount).send();
+
+    // 返回交易哈希
+    return receipt.getTransactionHash();
+}</code></pre>
+
+        <h3>7.5 调用合约 — 铸造 NFT</h3>
+        <div class="code-label">Java</div>
+        <pre><code>public String mintNFT(String contractAddress, String privateKey,
+                       String to) throws Exception {
+
+    Credentials credentials = Credentials.create(privateKey);
+    MyNFT nft = MyNFT.load(contractAddress, web3j, credentials, new DefaultGasProvider());
+
+    TransactionReceipt receipt = nft.mint(to).send();
+    return receipt.getTransactionHash();
+}</code></pre>
+
+        <h3>7.6 监听链上事件</h3>
+        <div class="code-label">Java</div>
+        <pre><code>// 监听 Transfer 事件
+Subscription subscription = web3j.transferFlowable(
+    DefaultBlockParameterName.EARLIEST,
+    DefaultBlockParameterName.LATEST,
+    contractAddress,  // 可选过滤
+    null              // 可选过滤特定地址
+).subscribe(event -&gt; {
+    System.out.println("Transfer: " + event.from + " -&gt; " + event.to + " : " + event.value);
+});</code></pre>
+
+        <h3>7.7 Web3j 核心类对照表</h3>
+        <table>
+            <thead><tr><th>Web3j 类</th><th>作用</th><th>Java 类比</th></tr></thead>
+            <tbody>
+                <tr><td><code>Web3j</code></td><td>与节点交互的入口</td><td>DataSource / EntityManager</td></tr>
+                <tr><td><code>Credentials</code></td><td>私钥 + 公钥封装</td><td>认证凭证</td></tr>
+                <tr><td><code>TransactionReceipt</code></td><td>交易回执（结果）</td><td>事务提交结果</td></tr>
+                <tr><td><code>Contract</code> 子类</td><td>合约 Java 包装</td><td>Repository / DAO</td></tr>
+                <tr><td><code>GasProvider</code></td><td>Gas 策略</td><td>连接池配置</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 8. 测试网与部署 -->
+    <section class="section" id="testnet">
+        <h2><span class="num">8</span> 测试网与部署</h2>
+
+        <h3>8.1 当前活跃的测试网</h3>
+        <table>
+            <thead><tr><th>测试网</th><th>状态</th><th>共识</th><th>推荐度</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Sepolia</strong></td><td>活跃（推荐）</td><td>PoS</td><td>首选，长期维护</td></tr>
+                <tr><td>Holesky</td><td>活跃</td><td>PoS</td><td>质押/验证者测试</td></tr>
+                <tr><td>Ganache / Anvil</td><td>本地模拟</td><td>—</td><td>开发调试首选</td></tr>
+            </tbody>
+        </table>
+
+        <h3>8.2 获取测试 ETH（水龙头 Faucet）</h3>
+        <table>
+            <thead><tr><th>水龙头</th><th>地址</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>Alchemy Faucet</td><td>sepoliafaucet.com</td><td>需 Alchemy 账号，0.5 ETH/天</td></tr>
+                <tr><td>Infura Faucet</td><td>infura.io/faucet/sepolia</td><td>需 Infura 账号</td></tr>
+                <tr><td>Chainlink Faucet</td><td>faucets.chain.link/sepolia</td><td>需 GitHub 或邮箱验证</td></tr>
+                <tr><td>Google Cloud Faucet</td><td>cloud.google.com/application/web3/faucet</td><td>0.1 ETH/天</td></tr>
+            </tbody>
+        </table>
+
+        <h3>8.3 RPC 节点提供商（免费额度）</h3>
+        <table>
+            <thead><tr><th>提供商</th><th>免费额度</th><th>注册</th></tr></thead>
+            <tbody>
+                <tr><td>Alchemy</td><td>30M compute units/月</td><td>alchemy.com</td></tr>
+                <tr><td>Infura</td><td>100K 请求/天</td><td>infura.io</td></tr>
+                <tr><td>QuickNode</td><td>1M requests/月</td><td>quicknode.com</td></tr>
+                <tr><td>Ankr</td><td>公共端点免费</td><td>ankr.com</td></tr>
+            </tbody>
+        </table>
+
+        <h3>8.4 部署合约到 Sepolia</h3>
+        <div class="code-label">终端 — 使用 Foundry 部署</div>
+        <pre><code># 部署 ERC-20
+forge create src/MyToken.sol:MyToken \
+    --constructor-args "My Demo Token" "MDT" 1000000 \
+    --private-key YOUR_PRIVATE_KEY \
+    --rpc-url https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+
+# 部署 ERC-721
+forge create src/MyNFT.sol:MyNFT \
+    --constructor-args "My Demo NFT" "MDN" "ipfs://QmYOUR_CID/" \
+    --private-key YOUR_PRIVATE_KEY \
+    --rpc-url https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY</code></pre>
+
+        <div class="callout callout-danger">
+            <strong>私钥安全</strong>
+            永远不要把私钥硬编码在代码里。使用环境变量：<code>--private-key $PRIVATE_KEY</code>，配合 <code>.env</code> 文件管理。
+        </div>
+
+        <h3>8.5 验证合约（Etherscan）</h3>
+        <div class="code-label">终端</div>
+        <pre><code>forge verify-contract &lt;CONTRACT_ADDRESS&gt; src/MyToken.sol:MyToken \
+    --etherscan-api-key $ETHERSCAN_API_KEY \
+    --chain sepolia \
+    --watch</code></pre>
+
+        <h3>8.6 开发部署流程</h3>
+        <div class="flow">
+            <span class="flow-step">编写合约</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">forge test</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">本地部署 (anvil)</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Java 集成测试</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Sepolia 部署</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">验证合约</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">Etherscan 确认</span>
+        </div>
+    </section>
+
+    <!-- 9. 钱包集成 -->
+    <section class="section" id="wallet">
+        <h2><span class="num">9</span> 钱包集成</h2>
+
+        <h3>9.1 MetaMask（浏览器插件）</h3>
+        <p>最常用的以太坊钱包，DApp 前端集成的标准选择。</p>
+        <table>
+            <thead><tr><th>功能</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>管理账户</td><td>每个账户 = 一个以太坊地址</td></tr>
+                <tr><td>签名交易</td><td>前端 DApp 通过 <code>eth_sendTransaction</code> 触发 MetaMask 弹窗确认</td></tr>
+                <tr><td>切换网络</td><td>支持主网、Sepolia 等测试网、自定义链</td></tr>
+                <tr><td>添加代币</td><td>通过合约地址 + ABI 显示自定义 ERC-20 / ERC-721</td></tr>
+            </tbody>
+        </table>
+
+        <h3>9.2 前端连接 MetaMask（可选）</h3>
+        <div class="code-label">TypeScript — React + Wagmi</div>
+        <pre><code>import { useAccount, useConnect, useSendTransaction } from 'wagmi';
+
+function App() {
+    const { address, isConnected } = useAccount();
+    const { connect, connectors } = useConnect();
+
+    if (!isConnected) {
+        return &lt;button onClick={() =&gt; connect({ connector: connectors[0] })}&gt;
+            连接 MetaMask
+        &lt;/button&gt;;
+    }
+
+    return &lt;p&gt;已连接: {address}&lt;/p&gt;;
+}</code></pre>
+
+        <h3>9.3 后端签名 vs 前端签名</h3>
+        <table>
+            <thead><tr><th>方式</th><th>适用场景</th><th>私钥位置</th></tr></thead>
+            <tbody>
+                <tr><td><strong>后端签名（Web3j）</strong></td><td>服务端自动化操作、批量铸造</td><td>服务器环境变量 / KMS</td></tr>
+                <tr><td><strong>前端签名（MetaMask）</strong></td><td>用户主动发起操作</td><td>用户浏览器钱包</td></tr>
+            </tbody>
+        </table>
+        <div class="callout callout-tip">
+            <strong>Demo 建议</strong>
+            先用后端签名（Web3j + 私钥在 .env）完成全流程，再考虑加前端 MetaMask 连接。
+        </div>
+    </section>
+
+    <!-- 10. 安全 -->
+    <section class="section" id="security">
+        <h2><span class="num">10</span> 安全最佳实践</h2>
+
+        <div class="callout callout-danger">
+            <strong>安全是链上开发的第一优先级</strong>
+            合约部署后无法修改，一个漏洞就可能导致资产永久丢失。Demo 阶段也要养成安全习惯。
+        </div>
+
+        <h3>10.1 私钥管理</h3>
+        <ul style="margin-left:1.2rem">
+            <li>永远不要硬编码私钥在源代码中</li>
+            <li>使用 <code>.env</code> 文件 + <code>.gitignore</code></li>
+            <li>生产环境使用 AWS KMS / HashiCorp Vault</li>
+            <li>不同环境（开发/测试/生产）使用不同私钥</li>
+        </ul>
+
+        <div class="code-label">.env（不要提交到 Git！）</div>
+        <pre><code>PRIVATE_KEY=0x...your_private_key
+ALCHEMY_API_KEY=your_alchemy_key
+ETHERSCAN_API_KEY=your_etherscan_key</code></pre>
+
+        <div class="code-label">.gitignore</div>
+        <pre><code>.env
+.env.local
+*</code></pre>
+
+        <h3>10.2 合约安全检查清单</h3>
+        <ul class="checklist">
+            <li>使用 OpenZeppelin 合约库，不要自己写加密/权限逻辑</li>
+            <li>所有外部调用检查重入攻击（OpenZeppelin 的 ReentrancyGuard）</li>
+            <li>使用 <code>require()</code> 校验输入参数</li>
+            <li>使用 <code>Ownable</code> / <code>AccessControl</code> 控制管理权限</li>
+            <li>部署前用 <code>forge test</code> 覆盖所有边界情况</li>
+            <li>考虑使用 Slither（静态分析）扫描合约</li>
+            <li>主网部署前做专业审计</li>
+        </ul>
+
+        <h3>10.3 常见漏洞</h3>
+        <table>
+            <thead><tr><th>漏洞</th><th>说明</th><th>防御</th></tr></thead>
+            <tbody>
+                <tr><td>重入攻击</td><td>外部调用后状态未更新</td><td>ReentrancyGuard + Checks-Effects-Interactions</td></tr>
+                <tr><td>整数溢出</td><td>Solidity 0.8+ 已内置检查</td><td>使用 ^0.8.0 以上版本</td></tr>
+                <tr><td>权限缺失</td><td>mint 等关键操作无权限控制</td><td>Ownable / AccessControl</td></tr>
+                <tr><td>前端跑路</td><td>合约 owner 可无限增发</td><td>限制 maxSupply，或放弃所有权</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 11. 推荐项目 -->
+    <section class="section" id="projects">
+        <h2><span class="num">11</span> 推荐借鉴项目</h2>
+
+        <p>以下是适合 Java 开发者入门 Web3 的开源项目，按推荐优先级排列：</p>
+
+        <div class="project-grid">
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/OpenZeppelin/openzeppelin-contracts">OpenZeppelin Contracts</a>
+                </div>
+                <div class="desc">安全合约库，ERC-20/721/1155 标准实现。所有合约开发的基石，必读源码。</div>
+                <div class="tags">
+                    <span class="tag">Solidity</span>
+                    <span class="tag">ERC-20</span>
+                    <span class="tag">ERC-721</span>
+                    <span class="tag">必读</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/LFDT-web3j/web3j">Web3j</a>
+                </div>
+                <div class="desc">Java 以太坊交互库，轻量级，支持合约生成、交易签名、事件监听。Java 开发者的主力工具。</div>
+                <div class="tags">
+                    <span class="tag">Java</span>
+                    <span class="tag">Ethereum</span>
+                    <span class="tag">必读</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/web3j/web3j-spring-boot-starter">Web3j Spring Boot Starter</a>
+                </div>
+                <div class="desc">Web3j 的 Spring Boot 自动配置，快速集成区块链服务到 Spring 项目。</div>
+                <div class="tags">
+                    <span class="tag">Java</span>
+                    <span class="tag">Spring Boot</span>
+                    <span class="tag">推荐</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/jambestwick/web3jdemo">web3jdemo</a>
+                </div>
+                <div class="desc">中文开发者维护的 web3j 用例，支持批量钱包生成、转账、余额查询、Mint 等操作。</div>
+                <div class="tags">
+                    <span class="tag">Java</span>
+                    <span class="tag">中文</span>
+                    <span class="tag">实战</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/pelyhe/nft-transfer-web3j">nft-transfer-web3j</a>
+                </div>
+                <div class="desc">Java + Spring + Web3j 实现 NFT 转账，使用 Camunda BPM 编排工作流。</div>
+                <div class="tags">
+                    <span class="tag">Java</span>
+                    <span class="tag">NFT</span>
+                    <span class="tag">Spring</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/OpenZeppelin/contracts-wizard">OpenZeppelin Wizard</a>
+                </div>
+                <div class="desc">交互式合约生成器，勾选功能自动生成代码。适合快速生成 ERC-20/721 合约模板。</div>
+                <div class="tags">
+                    <span class="tag">Solidity</span>
+                    <span class="tag">代码生成</span>
+                    <span class="tag">入门</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/foundry-rs/foundry">Foundry</a>
+                </div>
+                <div class="desc">Rust 实现的合约开发工具链（forge + cast + anvil），编译快、测试强、部署简单。</div>
+                <div class="tags">
+                    <span class="tag">Rust</span>
+                    <span class="tag">Solidity</span>
+                    <span class="tag">工具链</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="name">
+                    <a href="https://github.com/ethereum/solidity">Solidity 编译器</a>
+                </div>
+                <div class="desc">Solidity 语言官方仓库，包含编译器和文档。遇到语法问题时的权威参考。</div>
+                <div class="tags">
+                    <span class="tag">Solidity</span>
+                    <span class="tag">官方</span>
+                </div>
+            </div>
+        </div>
+
+        <h3>当前以太坊生态值得关注的趋势项目</h3>
+        <table>
+            <thead><tr><th>项目 / 方向</th><th>说明</th><th>借鉴点</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Base (Coinbase L2)</strong></td><td>Coinbase 推出的 OP Stack L2，Gas 极低，生态增长快</td><td>部署到 L2 更省 Gas，适合 Demo 上线</td></tr>
+                <tr><td><strong>ERC-6551 (Token Bound Accounts)</strong></td><td>NFT 拥有自己的钱包地址，可以持有资产、执行操作</td><td>下一代 NFT 标准，值得关注</td></tr>
+                <tr><td><strong>Account Abstraction (ERC-4337)</strong></td><td>智能合约钱包，Gas 代付、社交恢复、批量交易</td><td>改善用户体验的关键技术</td></tr>
+                <tr><td><strong>Uniswap V4</strong></td><td>DEX 协议，Hooks 机制自定义池行为</td><td>DeFi 合约设计最佳参考</td></tr>
+                <tr><td><strong>ZK 证明 (Polygon zkEVM, zkSync)</strong></td><td>零知识证明扩容</td><td>了解趋势即可，入门阶段不建议深入</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 12. 学习路线 -->
+    <section class="section" id="learning">
+        <h2><span class="num">12</span> 学习路线与资源</h2>
+
+        <h3>12.1 推荐学习路径（3 个阶段）</h3>
+        <table>
+            <thead><tr><th>阶段</th><th>时间</th><th>目标</th><th>产出</th></tr></thead>
+            <tbody>
+                <tr><td><strong>第一阶段：合约基础</strong></td><td>第 1-4 周</td><td>Solidity + ERC-20/721 + Java 后端 + 前端</td><td>完整的 NFT + Token Demo 上线测试网</td></tr>
+                <tr><td><strong>第二阶段：DeFi 深入</strong></td><td>第 5-8 周</td><td>Uniswap V2、WETH、AMM、LP、Router</td><td>理解 DEX 原理，能读写流动性池</td></tr>
+                <tr><td><strong>第三阶段：EVM 底层</strong></td><td>第 9-12 周</td><td>Foundry、Gas 优化、EVM、Opcode、MEV</td><td>能写出 Gas 优化合约，理解 MEV 机制</td></tr>
+            </tbody>
+        </table>
+
+        <h3>12.2 核心资源</h3>
+        <table>
+            <thead><tr><th>资源</th><th>链接</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>Solidity 官方文档</td><td>soliditylang.org</td><td>语言参考，遇到语法问题查这里</td></tr>
+                <tr><td>CryptoZombies</td><td>cryptozombies.io</td><td>交互式 Solidity 入门教程，游戏化学习</td></tr>
+                <tr><td>Alchemy University</td><td>alchemy.com/university</td><td>免费 Web3 开发课程</td></tr>
+                <tr><td>Web3j 文档</td><td>docs.web3j.io</td><td>Java 以太坊开发必读</td></tr>
+                <tr><td>Ethereum 开发者文档</td><td>ethereum.org/developers</td><td>以太坊官方开发者资源</td></tr>
+                <tr><td>Hardhat 文档</td><td>hardhat.org/docs</td><td>Hardhat 3 工具链完整文档</td></tr>
+                <tr><td>OpenZeppelin 文档</td><td>docs.openzeppelin.com</td><td>合约库 API 和安全指南</td></tr>
+                <tr><td>Uniswap V2 白皮书</td><td>uniswap.org/whitepaper.pdf</td><td>AMM 核心数学原理</td></tr>
+                <tr><td>Ethereum Yellow Paper</td><td>ethereum.github.io/yellowpaper</td><td>EVM 规范，Opcode 权威参考</td></tr>
+                <tr><td>evm.codes</td><td>evm.codes</td><td>交互式 Opcode 参考与 Playground</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 14. 第二阶段：DeFi 与 AMM 深入 -->
+    <section class="section" id="defi">
+        <h2><span class="num">14</span> 第二阶段：DeFi 与 AMM 深入</h2>
+
+        <p>完成第一阶段后，你已经能写 Token 和 NFT 合约了。第二阶段深入 DeFi 核心机制 —— 理解 DEX（去中心化交易所）如何运作，这是链上最核心的应用场景。</p>
+
+        <div class="callout callout-info">
+            <strong>为什么学 Uniswap V2 而不是 V3/V4？</strong>
+            V2 是最经典的 AMM 实现，代码简洁（核心合约仅 ~400 行），数学模型直观。理解 V2 后，V3 的集中流动性和 V4 的 Hooks 都是建立在同一基础上的演进。
+        </div>
+
+        <h3>14.1 核心概念全景</h3>
+        <table>
+            <thead><tr><th>概念</th><th>说明</th><th>Java 类比</th></tr></thead>
+            <tbody>
+                <tr><td><strong>DEX</strong></td><td>去中心化交易所，没有撮合引擎，用算法定价</td><td>无中间人的汇率兑换系统</td></tr>
+                <tr><td><strong>AMM</strong></td><td>自动做市商，用数学公式（x*y=k）替代订单簿</td><td>基于池的自动汇率计算器</td></tr>
+                <tr><td><strong>LP</strong></td><td>流动性提供者，向池子存入两种代币赚取手续费</td><td>做市商 / 资金提供方</td></tr>
+                <tr><td><strong>LP Token</strong></td><td>代表你在池中份额的 ERC-20 代币</td><td>基金份额凭证</td></tr>
+                <tr><td><strong>WETH</strong></td><td>Wrapped ETH，把原生 ETH 包装成 ERC-20 标准代币</td><td>ETH 的 ERC-20 适配器</td></tr>
+                <tr><td><strong>Router</strong></td><td>路由合约，处理多跳兑换、拆单、手续费计算</td><td>交易路由引擎 / Strategy 层</td></tr>
+                <tr><td><strong>Pair</strong></td><td>交易对合约，存储两种代币的储备量</td><td>一个具体交易对的流动池</td></tr>
+                <tr><td><strong>Factory</strong></td><td>工厂合约，创建和管理所有 Pair</td><td>Pair 工厂 / 注册中心</td></tr>
+                <tr><td><strong>Slippage</strong></td><td>滑点，实际成交价与预期价的偏差</td><td>价格偏移 / 交易冲击</td></tr>
+                <tr><td><strong>Impermanent Loss</strong></td><td>无常损失，LP 相比单纯持币的亏损</td><td>做市的对冲风险</td></tr>
+            </tbody>
+        </table>
+
+        <h3>14.2 Uniswap V2 架构</h3>
+        <div class="arch-diagram">
+                        Uniswap V2 架构
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-accent">用户 / DApp 前端</span>                                    │
+ └─────────────┬────────────────────────────────────────────┘
+               │ 调用 swap / addLiquidity / removeLiquidity
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-orange">Router 合约</span> (UniswapV2Router02)                       │
+ │  · 路由计算：多跳路径 (TokenA → WETH → TokenB)            │
+ │  · 滑点保护：amountOutMin 参数                            │
+ │  · Deadline 检查：防止交易被延迟打包                       │
+ │  · 手续费扣除：0.3% 走 LP，0.05% 走 UNI 持有者(V3+)      │
+ └─────────────┬────────────────────────────────────────────┘
+               │ 内部调用
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-green">Pair 合约</span> (UniswapV2Pair)     ERC-20 (LP Token)     │
+ │  · 恒定乘积公式：x * y = k                               │
+ │  · 储备量 (reserve0, reserve1)                            │
+ │  · K 值累计 (KLast)                                      │
+ │  · 铸造/销毁 LP Token                                    │
+ │  · 价格预言机 (cumulative price)                          │
+ └─────────────┬────────────────────────────────────────────┘
+               │ 创建 Pair
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-purple">Factory 合约</span> (UniswapV2Factory)                       │
+ │  · createPair(tokenA, tokenB) → 部署新 Pair              │
+ │  · getPair(tokenA, tokenB) → 查询 Pair 地址              │
+ │  · allPairs[] → 所有已创建的 Pair 列表                    │
+ │  · feeTo / feeToSetter → 手续费接收配置                   │
+ └──────────────────────────────────────────────────────────┘</div>
+
+        <h3>14.3 AMM 核心数学：恒定乘积公式</h3>
+
+        <h4>x * y = k</h4>
+        <p>这是 Uniswap V2 的核心公式，含义：</p>
+        <table>
+            <thead><tr><th>符号</th><th>含义</th></tr></thead>
+            <tbody>
+                <tr><td>x</td><td>池中 Token A 的储备量 (reserve0)</td></tr>
+                <tr><td>y</td><td>池中 Token B 的储备量 (reserve1)</td></tr>
+                <tr><td>k</td><td>恒定乘积（交易前后 k 值不变，扣除手续费后略增）</td></tr>
+            </tbody>
+        </table>
+
+        <h4>兑换计算</h4>
+        <div class="code-label">公式</div>
+        <pre><code>// 用 dx 个 Token A 换出 dy 个 Token B
+// 扣除 0.3% 手续费后：实际输入 = dx * 997 / 1000
+dy = y * (dx * 997) / (x * 1000 + dx * 997)
+
+// 多跳兑换（通过 WETH 中转）
+// TokenA → WETH → TokenB
+amountOut1 = WETH_reserve * (amountIn * 997) / (TokenA_reserve * 1000 + amountIn * 997)
+amountOut2 = TokenB_reserve * (amountOut1 * 997) / (WETH_reserve * 1000 + amountOut1 * 997)</code></pre>
+
+        <h4>添加流动性</h4>
+        <div class="code-label">公式</div>
+        <pre><code>// 存入等价值的 Token A 和 Token B
+// 铸造的 LP Token 数量 = min(
+//   dx / reserve0 * totalSupply,
+//   dy / reserve1 * totalSupply
+// )
+// 首次添加流动性：LP 数量 = sqrt(dx * dy)</code></pre>
+
+        <h3>14.4 WETH — 为什么需要包装 ETH？</h3>
+
+        <div class="callout callout-warn">
+            <strong>核心原因</strong>
+            原生 ETH 不是 ERC-20 代币，没有 <code>transfer()</code>、<code>approve()</code>、<code>balanceOf()</code> 等标准方法。Uniswap 的 Pair 合约只处理 ERC-20 代币，所以需要先把 ETH 包装成 WETH。
+        </div>
+
+        <table>
+            <thead><tr><th>操作</th><th>ETH → WETH</th><th>WETH → ETH</th></tr></thead>
+            <tbody>
+                <tr><td><strong>方法</strong></td><td><code>deposit()</code>（存入 ETH，铸造等量 WETH）</td><td><code>withdraw(uint256)</code>（销毁 WETH，取回 ETH）</td></tr>
+                <tr><td><strong>汇率</strong></td><td>1 ETH = 1 WETH（始终 1:1）</td><td>1 WETH = 1 ETH</td></tr>
+                <tr><td><strong>Gas</strong></td><td>~45,000 gas</td><td>~30,000 gas</td></tr>
+            </tbody>
+        </table>
+
+        <div class="code-label">Solidity — WETH 核心逻辑</div>
+        <pre><code>// WETH 合约极简实现（实际使用 OpenZeppelin 的 ERC20）
+contract WETH {
+    string public name = "Wrapped Ether";
+    string public symbol = "WETH";
+    uint8 public decimals = 18;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function deposit() external payable {
+        balanceOf[msg.sender] += msg.value;  // 存 ETH，铸造 WETH
+        emit Deposit(msg.sender, msg.value);
+    }
+
+    function withdraw(uint256 amount) external {
+        require(balanceOf[msg.sender] >= amount);
+        balanceOf[msg.sender] -= amount;     // 销毁 WETH
+        payable(msg.sender).transfer(amount); // 取回 ETH
+        emit Withdrawal(msg.sender, amount);
+    }
+}</code></pre>
+
+        <h3>14.5 Router 合约详解</h3>
+
+        <p>Router 是用户与 Pair 之间的中间层，处理复杂的路由逻辑：</p>
+
+        <table>
+            <thead><tr><th>方法</th><th>功能</th><th>关键参数</th></tr></thead>
+            <tbody>
+                <tr><td><code>swapExactTokensForTokens</code></td><td>用精确数量的输入 Token 换取尽可能多的输出 Token</td><td>amountIn, amountOutMin, path[], to, deadline</td></tr>
+                <tr><td><code>swapTokensForExactTokens</code></td><td>用尽可能少的输入 Token 换取精确数量的输出 Token</td><td>amountOut, amountInMax, path[], to, deadline</td></tr>
+                <tr><td><code>swapExactETHForTokens</code></td><td>用 ETH 换 Token</td><td>msg.value, amountOutMin, path[], to, deadline</td></tr>
+                <tr><td><code>swapExactTokensForETH</code></td><td>用 Token 换 ETH</td><td>amountIn, amountOutMin, path[], to, deadline</td></tr>
+                <tr><td><code>addLiquidity</code></td><td>添加流动性</td><td>tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin, to, deadline</td></tr>
+                <tr><td><code>removeLiquidity</code></td><td>移除流动性</td><td>tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-tip">
+            <strong>path[] 路径参数</strong>
+            直接交易对：<code>[TokenA, TokenB]</code>。多跳：<code>[TokenA, WETH, TokenB]</code>。Router 会依次调用每个 Pair 的 swap 方法，实现链式兑换。
+        </div>
+
+        <h3>14.6 LP（流动性提供）详解</h3>
+
+        <h4>添加流动性流程</h4>
+        <div class="flow">
+            <span class="flow-step">approve Router</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">计算等值比例</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">转入两种 Token</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">铸造 LP Token</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step">获得手续费份额</span>
+        </div>
+
+        <h4>无常损失 (Impermanent Loss)</h4>
+        <table>
+            <thead><tr><th>价格变化</th><th>无常损失</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>1.25x</td><td>~0.6%</td><td>价格变化小，损失可忽略</td></tr>
+                <tr><td>1.5x</td><td>~2.0%</td><td>手续费收入可能覆盖</td></tr>
+                <tr><td>2x</td><td>~5.7%</td><td>手续费能否覆盖取决于交易量</td></tr>
+                <tr><td>3x</td><td>~13.4%</td><td>较大损失，不如单纯持币</td></tr>
+                <tr><td>5x</td><td>~25.5%</td><td>严重无常损失</td></tr>
+            </tbody>
+        </table>
+        <p>无常损失在价格回归后会消失（所以叫"无常"），但如果价格永久偏离，损失就是永久的。</p>
+
+        <h3>14.7 Uniswap V2 vs V3 vs V4</h3>
+        <table>
+            <thead><tr><th>特性</th><th>V2</th><th>V3</th><th>V4</th></tr></thead>
+            <tbody>
+                <tr><td>流动性</td><td>均匀分布 (0, ∞)</td><td>集中流动性（自定义价格区间）</td><td>同 V3 + Hooks 扩展</td></tr>
+                <tr><td>资金效率</td><td>低（资金分散在全价格区间）</td><td>高（集中到活跃区间）</td><td>同 V3</td></tr>
+                <tr><td>手续费</td><td>固定 0.3%</td><td>多级 (0.01%/0.05%/0.3%/1%)</td><td>动态（Hooks 自定义）</td></tr>
+                <tr><td>合约复杂度</td><td>~400 行核心</td><td>~1000+ 行</td><td>更复杂 + Hook 生态</td></tr>
+                <tr><td>学习推荐</td><td><strong>先学这个</strong></td><td>理解 V2 后再学</td><td>了解趋势即可</td></tr>
+            </tbody>
+        </table>
+
+        <h3>14.8 第二阶段学习计划（4 周）</h3>
+        <table>
+            <thead><tr><th>周次</th><th>主题</th><th>任务</th><th>产出</th></tr></thead>
+            <tbody>
+                <tr><td>第 5 周</td><td>Uniswap V2 源码</td><td>阅读 Factory + Pair + Router 三个核心合约，理解每个函数</td><td>绘制完整的调用流程图</td></tr>
+                <tr><td>第 6 周</td><td>WETH + 交易实操</td><td>在测试网上完成：wrap ETH、swap Token、多跳路由</td><td>用 Hardhat 脚本自动化交易</td></tr>
+                <tr><td>第 7 周</td><td>LP + 流动性</td><td>添加/移除流动性，计算 LP 份额，模拟无常损失</td><td>流动性管理脚本 + 收益计算器</td></tr>
+                <tr><td>第 8 周</td><td>迷你 DEX</td><td>基于 V2 原理自己实现一个简化版 AMM（仅 swap，不含手续费）</td><td>SimpleAMM.sol 合约 + 测试</td></tr>
+            </tbody>
+        </table>
+
+        <h3>14.9 推荐学习资源</h3>
+        <table>
+            <thead><tr><th>资源</th><th>链接</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>Uniswap V2 白皮书</td><td>uniswap.org/whitepaper.pdf</td><td>AMM 数学推导，必读</td></tr>
+                <tr><td>Uniswap V2 源码</td><td>github.com/Uniswap/v2-core</td><td>核心合约：Pair + Factory</td></tr>
+                <tr><td>Uniswap V2 Router</td><td>github.com/Uniswap/v2-periphery</td><td>Router + Library 合约</td></tr>
+                <tr><td>WETH 合约</td><td>github.com/eth-io/weth</td><td>仅 50 行的 WETH 实现</td></tr>
+                <tr><td>DeFi MOOC</td><td>defi-learning.org</td><td>斯坦福 DeFi 公开课</td></tr>
+                <tr><td>Web3 Crypto Course</td><td>web3crypto.cc</td><td>交互式 DeFi 学习</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 15. 第三阶段：EVM 底层与 MEV -->
+    <section class="section" id="evm-deep">
+        <h2><span class="num">15</span> 第三阶段：EVM 底层与 MEV</h2>
+
+        <p>理解 DeFi 之后，第三阶段深入 EVM 底层 —— 你的代码最终如何被虚拟机执行、Gas 如何计算、MEV 如何影响交易。这是从"会用"到"精通"的关键跨越。</p>
+
+        <div class="callout callout-info">
+            <strong>为什么学这些？</strong>
+            不理解 EVM，你无法写出真正省 Gas 的合约；不理解 MEV，你的交易可能被三明治攻击蚕食。这两个主题直接影响合约的安全性和用户资金安全。
+        </div>
+
+        <h3>15.1 核心概念全景</h3>
+        <table>
+            <thead><tr><th>概念</th><th>说明</th><th>为什么重要</th></tr></thead>
+            <tbody>
+                <tr><td><strong>EVM</strong></td><td>Ethereum Virtual Machine，执行智能合约的虚拟机</td><td>所有合约最终编译成 EVM 字节码执行</td></tr>
+                <tr><td><strong>Opcode</strong></td><td>操作码，EVM 的原子指令（如 ADD、SLOAD、CALL）</td><td>理解 Gas 成本的根源，每个 Opcode 有固定 Gas 消耗</td></tr>
+                <tr><td><strong>Gas 优化</strong></td><td>减少合约执行消耗的 Gas</td><td>主网交易费用直接与 Gas 挂钩，优化 = 省钱</td></tr>
+                <tr><td><strong>MEV</strong></td><td>Maximal Extractable Value，矿工/验证者可提取的最大价值</td><td>你的交易可能被抢跑、三明治攻击</td></tr>
+                <tr><td><strong>Foundry</strong></td><td>Rust 实现的合约工具链，Gas 追踪和模糊测试最强</td><td>Gas 优化的核心工具：forge gas-report、forge snapshot</td></tr>
+                <tr><td><strong>字节码</strong></td><td>Solidity 编译后的低级指令序列</td><td>debugging 和 Gas 分析需要看字节码</td></tr>
+                <tr><td><strong>存储槽</strong></td><td>合约状态变量的存储布局（256 位槽位）</td><td>SLOAD/SSTORE 是最贵的操作，存储布局直接影响 Gas</td></tr>
+            </tbody>
+        </table>
+
+        <h3>15.2 EVM 架构</h3>
+        <div class="arch-diagram">
+                        EVM 执行模型
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-accent">交易输入</span>   calldata (合约调用数据)                      │
+ └─────────────┬────────────────────────────────────────────┘
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-orange">EVM 执行引擎</span>                                           │
+ │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐   │
+ │  │ <span class="hl-green">Stack</span>    │ │ <span class="hl-purple">Memory</span>   │ │ <span class="hl-cyan">Storage</span>   │ │ <span class="hl-pink">Calldata</span> │   │
+ │  │ 32B 深度  │ │ 临时内存  │ │ 永久存储  │ │ 只读输入  │   │
+ │  │ 1024层   │ │ 线性扩展 │ │ 256→256  │ │          │   │
+ │  └──────────┘ └──────────┘ └──────────┘ └──────────┘   │
+ │                                                          │
+ │  程序计数器 (PC) → 逐条执行 Opcode                        │
+ │  Gas 计数器 → 每条指令扣 Gas，不足则 REVERT               │
+ └─────────────┬────────────────────────────────────────────┘
+               ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │  <span class="hl-green">执行结果</span>   返回数据 / 状态变更 / 事件日志             │
+ └──────────────────────────────────────────────────────────┘</div>
+
+        <h3>15.3 Opcode 速查（按 Gas 成本分类）</h3>
+        <table>
+            <thead><tr><th>Gas 等级</th><th>Opcode</th><th>Gas 消耗</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td style="color:var(--color-green)"><strong>极低</strong></td><td>ADD, SUB, MUL, DIV, LT, GT, EQ</td><td>3</td><td>算术和比较运算，最便宜</td></tr>
+                <tr><td style="color:var(--color-green)"><strong>低</strong></td><td>AND, OR, XOR, NOT, SHL, SHR</td><td>3</td><td>位运算</td></tr>
+                <tr><td style="color:var(--color-cyan)"><strong>中等</strong></td><td>MLOAD, MSTORE, MSTORE8</td><td>3-6</td><td>内存操作（内存扩展另计）</td></tr>
+                <tr><td style="color:var(--color-cyan)"><strong>中等</strong></td><td>JUMP, JUMPI, PC, MSIZE</td><td>8</td><td>控制流</td></tr>
+                <tr><td style="color:var(--color-orange)"><strong>高</strong></td><td>SLOAD</td><td>2,100（冷）/ 100（热）</td><td>读存储槽，最贵的操作之一</td></tr>
+                <tr><td style="color:var(--color-red)"><strong>极高</strong></td><td>SSTORE</td><td>5,000-22,100</td><td>写存储槽，最贵的操作</td></tr>
+                <tr><td style="color:var(--color-red)"><strong>极高</strong></td><td>CALL, STATICCALL, DELEGATECALL</td><td>2,600+</td><td>外部调用，基础 Gas + 传递值</td></tr>
+                <tr><td style="color:var(--color-orange)"><strong>高</strong></td><td>LOG0-LOG4</td><td>375 + 375*topics + 8*bytes</td><td>事件日志</td></tr>
+                <tr><td style="color:var(--color-green)"><strong>零</strong></td><td>STOP, RETURN, REVERT, INVALID</td><td>0</td><td>终止执行</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout callout-warn">
+            <strong>冷/热访问</strong>
+            EIP-2929 引入冷热访问：同一交易中首次访问某个存储槽（冷）= 2100 Gas，之后（热）= 100 Gas。这意味着合并多次 SLOAD 为一次可大幅省 Gas。
+        </div>
+
+        <h3>15.4 Gas 优化实战</h3>
+
+        <h4>优化 1：存储槽打包</h4>
+        <div class="code-label">Solidity — 优化前 vs 优化后</div>
+        <pre><code>// ❌ 优化前：每个变量占一个槽位 → 3 次 SSTORE = ~15,000 Gas
+struct UserInfo {
+    uint256 balance;    // slot 0
+    uint256 nonce;      // slot 1
+    bool    isActive;   // slot 2
+}
+
+// ✅ 优化后：bool 和 uint128 打包到一个槽位 → 2 次 SSTORE = ~10,000 Gas
+struct UserInfo {
+    uint256 balance;      // slot 0
+    uint128 nonce;        // slot 1 (低 128 位)
+    bool    isActive;     // slot 1 (第 129 位)
+    // nonce + isActive 共享一个 256 位槽位
+}</code></pre>
+
+        <h4>优化 2：缓存存储变量</h4>
+        <div class="code-label">Solidity</div>
+        <pre><code>// ❌ 每次循环都 SLOAD（冷访问 2100 Gas / 热访问 100 Gas）
+for (uint256 i = 0; i < array.length; i++) { ... }
+
+// ✅ 缓存到内存变量（3 Gas 读取）
+uint256 len = array.length;  // 1 次 SLOAD
+for (uint256 i = 0; i < len; i++) { ... }</code></pre>
+
+        <h4>优化 3：使用 unchecked</h4>
+        <div class="code-label">Solidity</div>
+        <pre><code>// ❌ 默认溢出检查（每次 ++ 消耗额外 Gas）
+for (uint256 i = 0; i < len; i++) { ... }
+
+// ✅ 循环变量不可能溢出，跳过检查
+for (uint256 i = 0; i < len;) {
+    unchecked { ++i; }
+}</code></pre>
+
+        <h4>优化 4：用事件替代存储</h4>
+        <div class="code-label">Solidity</div>
+        <pre><code>// ❌ 存储到链上（SSTORE 5000+ Gas）
+mapping(uint256 => string) public tokenURIs;
+
+// ✅ 用事件记录（LOG ~1000 Gas，查询用 The Graph）
+event TokenURISet(uint256 indexed tokenId, string uri);
+
+// 链下通过 The Graph / 链上索引器查询历史事件</code></pre>
+
+        <h4>优化 5：Calldata 替代 Memory</h4>
+        <div class="code-label">Solidity</div>
+        <pre><code>// ❌ 外部函数的 array 参数用 memory（复制一次）
+function process(uint256[] memory items) external { ... }
+
+// ✅ 只读时用 calldata（零拷贝，直接读交易输入）
+function process(uint256[] calldata items) external { ... }</code></pre>
+
+        <h3>15.5 MEV 详解</h3>
+
+        <h4>什么是 MEV？</h4>
+        <p>MEV (Maximal Extractable Value) 是区块生产者（矿工/验证者）通过重新排序、插入或删除交易来提取的额外利润。最初叫"Miner Extractable Value"，POS 后改为 "Maximal"。</p>
+
+        <h4>常见 MEV 策略</h4>
+        <table>
+            <thead><tr><th>策略</th><th>原理</th><th>影响</th><th>防御</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Front-running（抢跑）</strong></td><td>监控 mempool，发现有利交易后以更高 Gas 抢先执行</td><td>用户多付钱</td><td>私有交易池、Flashbots Protect</td></tr>
+                <tr><td><strong>Back-running（尾随）</strong></td><td>在目标交易之后立即执行套利</td><td>通常对用户无害</td><td>—</td></tr>
+                <tr><td><strong> Sandwich Attack（三明治）</strong></td><td>前买后卖：在目标交易前买入推高价格，目标交易执行后再卖出</td><td>用户交易滑点增大</td><td>设置严格 slippage、使用 Flashbots</td></tr>
+                <tr><td><strong>Arbitrage（套利）</strong></td><td>不同 DEX 同一交易对价格不一致时，低买高卖</td><td>促进价格收敛，正面作用</td><td>—</td></tr>
+                <tr><td><strong>Liquidation（清算）</strong></td><td>监控借贷协议，发现可清算仓位后抢先清算拿奖励</td><td>协议正常运作的一部分</td><td>—</td></tr>
+            </tbody>
+        </table>
+
+        <h4>三明治攻击图解</h4>
+        <div class="arch-diagram">
+ <span class="hl-accent">受害者</span>提交 Swap：用 1000 USDC 换 ETH（设置 5% slippage）
+              ↓
+ ┌─────────────────────────────────────────────────────┐
+ │  <span class="hl-red">Mempool（待处理交易池）</span>                               │
+ │  攻击者看到这笔交易后：                                │
+ │                                                      │
+ │  1. <span class="hl-orange">Front-run</span>：用更高 Gas 抢先买入 ETH → 价格上涨        │
+ │  2. <span class="hl-text">Victim</span>：受害者的 Swap 执行 → 以更差价格成交          │
+ │  3. <span class="hl-green">Back-run</span>：受害者成交后，攻击者卖出 ETH → 赚取差价    │
+ └─────────────────────────────────────────────────────┘
+              ↓
+ <span class="hl-red">攻击者利润 = 受害者的滑点损失</span></div>
+
+        <h4>防御 MEV 的方法</h4>
+        <table>
+            <thead><tr><th>方法</th><th>原理</th><th>适用场景</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Flashbots Protect RPC</strong></td><td>交易不走公开 mempool，直接发给 Flashbots 拍卖</td><td>所有用户，最简单</td></tr>
+                <tr><td><strong>设置低 Slippage</strong></td><td>限制最大可接受滑点，三明治攻击无利可图</td><td>小额交易，设 0.1%-0.5%</td></tr>
+                <tr><td><strong>私有交易池</strong></td><td>通过 MEV Share / MEV Blocker 等提交</td><td>大额交易</td></tr>
+                <tr><td><strong>Batch Auction（批量拍卖）</strong></td><td>CoW Swap 等协议统一结算，消除排序优势</td><td>DEX 交易</td></tr>
+                <tr><td><strong>Commit-Reveal</strong></td><td>先提交哈希，再揭示真实操作，隐藏交易意图</td><td>特定合约设计</td></tr>
+            </tbody>
+        </table>
+
+        <h3>15.6 Foundry 工具链（Gas 优化必备）</h3>
+
+        <div class="callout callout-info">
+            <strong>为什么现在学 Foundry？</strong>
+            第一阶段用 Hardhat 快速上手，第三阶段引入 Foundry 是因为它的 Gas 分析能力远超 Hardhat：<code>forge gas-report</code> 精确到每个函数的 Gas 消耗，<code>forge snapshot</code> 追踪 Gas 变化，<code>forge fuzz</code> 发现边界情况。
+        </div>
+
+        <h4>核心 Gas 分析命令</h4>
+        <div class="code-label">终端</div>
+        <pre><code># 安装 Foundry
+curl -L https://foundry.paradigm.xyz | bash && foundryup
+
+# Gas 报告：每个函数的 Gas 消耗
+forge test --gas-report
+
+# Gas 快照：记录当前 Gas 水平，对比优化前后
+forge snapshot          # 生成 .gas-snapshot
+forge snapshot --check  # 对比是否 Gas 增加
+
+# 模糊测试：自动生成随机输入
+forge test --fuzz-runs 10000
+
+# 查看合约字节码和 Opcode
+forge inspect MyToken opcodes
+forge inspect MyToken storage-layout</code></pre>
+
+        <h4>Foundry vs Hardhat 对比</h4>
+        <table>
+            <thead><tr><th>功能</th><th>Hardhat</th><th>Foundry</th></tr></thead>
+            <tbody>
+                <tr><td>Gas 报告</td><td>hardhat-gas-reporter（需要额外配置）</td><td><code>forge test --gas-report</code>（内置）</td></tr>
+                <tr><td>Gas 快照对比</td><td>不支持</td><td><code>forge snapshot --check</code></td></tr>
+                <tr><td>模糊测试</td><td>需安装插件</td><td>内置，Solidity 写测试</td></tr>
+                <tr><td>Opcode 查看</td><td>不支持</td><td><code>forge inspect</code></td></tr>
+                <tr><td>测试语言</td><td>JavaScript/TypeScript</td><td>Solidity</td></tr>
+                <tr><td>编译速度</td><td>较慢</td><td>快 10x+</td></tr>
+                <tr><td>推荐场景</td><td>前端集成、JS 生态</td><td>Gas 优化、安全审计、深度测试</td></tr>
+            </tbody>
+        </table>
+
+        <h3>15.7 第三阶段学习计划（4 周）</h3>
+        <table>
+            <thead><tr><th>周次</th><th>主题</th><th>任务</th><th>产出</th></tr></thead>
+            <tbody>
+                <tr><td>第 9 周</td><td>Foundry + Gas 分析</td><td>安装 Foundry，用 <code>forge test --gas-report</code> 分析 ChainForge 合约的 Gas 消耗</td><td>Gas 报告 + 识别 Top 5 昂贵操作</td></tr>
+                <tr><td>第 10 周</td><td>Gas 优化实战</td><td>应用打包、缓存、unchecked、calldata 等优化技巧</td><td>优化后 Gas 快照对比（目标降低 20%+）</td></tr>
+                <tr><td>第 11 周</td><td>EVM + Opcode</td><td>在 evm.codes 上调试合约字节码，理解每个 Opcode 的作用和 Gas</td><td>能手写简单 Opcode 程序</td></tr>
+                <tr><td>第 12 周</td><td>MEV 实战</td><td>用 Flashbots Protect RPC 提交交易，分析三明治攻击案例</td><td>MEV 防御方案文档 + 安全交易脚本</td></tr>
+            </tbody>
+        </table>
+
+        <h3>15.8 推荐学习资源</h3>
+        <table>
+            <thead><tr><th>资源</th><th>链接</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td>evm.codes</td><td>evm.codes</td><td>交互式 Opcode 参考 + Playground，必用</td></tr>
+                <tr><td>Ethereum Yellow Paper</td><td>ethereum.github.io/yellowpaper</td><td>EVM 规范权威文档</td></tr>
+                <tr><td>Foundry Book</td><td>book.getfoundry.sh</td><td>Foundry 完整文档</td></tr>
+                <tr><td>MEV Research</td><td>research.mev.dev</td><td>Flashbots MEV 研究资料</td></tr>
+                <tr><td>MEV Explore</td><td>explore.flashbots.net</td><td>MEV 交易可视化分析</td></tr>
+                <tr><td>Noxx MEV 系列文章</td><td>noxx.substack.com</td><td>深入浅出的 EVM + MEV 教程</td></tr>
+                <tr><td>Gas Optimization Tips</td><td>github.com/KadenZipfel/gas-optimizations</td><td>Gas 优化技巧合集</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 16. FAQ -->
+    <section class="section" id="faq">
+        <h2><span class="num">16</span> 常见问题</h2>
+
+        <div class="faq-item">
+            <div class="faq-q">Q: 一定要用 Foundry 吗？能用 Hardhat 吗？</div>
+            <div class="faq-a">A: 都可以。Foundry 更快且用 Solidity 写测试（对 Java 开发者更直观），Hardhat 生态更成熟。Demo 阶段推荐 Foundry。</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">Q: Web3j 和 Ethers.js / Web3.py 有什么区别？</div>
+            <div class="faq-a">A: 功能相同，语言不同。Web3j = Java 版，Ethers.js = JavaScript 版，Web3.py = Python 版。Java 开发者用 Web3j 最自然。</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">Q: 测试网的 ETH 有价值吗？</div>
+            <div class="faq-a">A: 没有价值。测试网 ETH 是免费的，仅用于开发测试。主网 ETH 才有真实价值。</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">Q: 合约部署后能修改吗？</div>
+            <div class="faq-a">A: 不能直接修改。可以使用代理模式（OpenZeppelin 的 UUPS/Transparent Proxy）实现可升级合约，但增加了复杂度。Demo 阶段重新部署即可。</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">Q: Gas 费用为什么这么高？</div>
+            <div class="faq-a">A: 以太坊主网 Gas 较高。可以部署到 L2（Base、Arbitrum）降低 Gas，或使用测试网（免费）。Demo 阶段全程用测试网。</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">Q: Java 和 Rust 都要学吗？</div>
+            <div class="faq-a">A: Demo 阶段不需要 Rust。Java + Solidity 完全够用。如果后续需要高性能签名服务或自建节点，再考虑 Rust。</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q">Q: 如何选择节点服务？</div>
+            <div class="faq-a">A: 开发阶段用 Alchemy 免费额度（30M CU/月）足够。生产环境建议付费或自建节点保证稳定性。</div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--color-border);text-align:center;color:var(--color-text2);font-size:0.82rem;">
+        <p>面向 Java 开发者的 Web3 入门指南 — 2026 年 5 月更新</p>
+        <p style="margin-top:0.3rem">三阶段路线：合约基础 → DeFi/AMM → EVM/MEV</p>
+        <p style="margin-top:0.3rem">技术栈：Java 17+ / Spring Boot / Web3j / Solidity / Hardhat / OpenZeppelin / Foundry</p>
+    </div>
+
+</div>
+</body>
+</html>
