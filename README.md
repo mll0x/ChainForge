@@ -18,7 +18,7 @@
 | 智能合约 | Solidity + Hardhat 3 | 合约开发、测试、部署 |
 | 合约库 | OpenZeppelin 5.x | 安全的 ERC-20/721 标准实现 |
 | 后端 | Java 17 + Spring Boot 3.5 + Web3j 4.11 | 合约调用、交易签名、API 服务 |
-| 前端 | React + Wagmi + RainbowKit | 钱包连接、DApp 交互 |
+| 前端 | Next.js 16 + React 19 + Wagmi 2 + RainbowKit 2 | 钱包连接、DApp 交互 |
 
 ## 项目结构
 
@@ -38,7 +38,12 @@ ChainForge/
 │       ├── service/    # 业务逻辑 (Wallet、Token、NFT、事件监听)
 │       ├── controller/ # REST API + 全局异常处理
 │       └── model/      # DTO (record 类型)
-├── frontend/           # React 前端 (待开发)
+├── frontend/           # Next.js 前端
+│   └── src/
+│       ├── app/        # 页面路由 (home, token, nft)
+│       ├── components/ # 组件 (WalletCard, TransferForm, NftGallery...)
+│       ├── hooks/      # 自定义 Hooks (useTokenBalance, useNftList)
+│       └── lib/        # Wagmi 配置 + API 客户端
 ├── .env.example        # 环境变量模板
 ├── .gitignore
 └── README.md
@@ -85,6 +90,34 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## 前端页面
+
+![ChainForge Light Theme](light-theme-home.png)
+
+| 页面 | 路径 | 功能 |
+|------|------|------|
+| 首页 | `/` | 钱包连接 + 导航卡片（Token / NFT） |
+| Token | `/token` | 转账、授权、增发表单 |
+| NFT | `/nft` | NFT 铸造表单 + 画廊展示 |
+
+### 核心组件
+
+| 组件 | 说明 |
+|------|------|
+| `WalletCard` | 显示钱包地址、ETH 余额、Token 余额 |
+| `TransferForm` | Token 转账表单 |
+| `ApproveForm` | Token 授权额度表单 |
+| `MintForm` | Token 增发表单 |
+| `MintNftForm` | NFT 铸造表单（支持批量） |
+| `NftGallery` | NFT 画廊网格展示 |
+| `NftCard` | 单个 NFT 卡片 |
+| `Providers` | Wagmi + RainbowKit + React Query Provider |
+
+### 支持网络
+
+- **Localhost** — Hardhat 本地节点 (`127.0.0.1:8545`)
+- **Sepolia** — 以太坊测试网
 
 ## 合约说明
 
@@ -220,7 +253,7 @@ POST /api/nft/mint
 |------|------|------|------|
 | 合约基础 | 第 1 周 | Solidity 语法 + ERC-20/721 标准 | ✅ 已完成 |
 | Java 集成 | 第 2 周 | Web3j 连接节点、调用合约、签名交易 | ✅ 已完成 |
-| React 前端 | 第 3 周 | 钱包连接、DApp 交互 | 🚧 进行中 |
+| React 前端 | 第 3 周 | 钱包连接、DApp 交互 | ✅ 已完成 |
 | 整合完善 | 第 4 周 | 联调、文档、部署 | ⬚ 待开始 |
 
 ## 安全注意事项
