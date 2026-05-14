@@ -94,7 +94,8 @@ npm run dev
 ## 前端页面
 
 ![ChainForge Light Theme](light-theme-home.png)
-
+![alt text](image.png)
+![alt text](image-1.png)
 | 页面 | 路径 | 功能 |
 |------|------|------|
 | 首页 | `/` | 钱包连接 + 导航卡片（Token / NFT） |
