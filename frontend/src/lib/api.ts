@@ -64,4 +64,7 @@ export const api = {
 
   getNftInfo: (tokenId: number) =>
     request<NftInfo>(`/api/nft/${tokenId}`),
+
+  getTotalMinted: () =>
+    request<number>("/api/nft/total-minted"),
 };

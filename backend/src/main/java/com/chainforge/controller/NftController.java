@@ -23,6 +23,15 @@ public class NftController {
 
     @GetMapping("/{tokenId}")
     public ApiResponse<NftInfo> getNftInfo(@PathVariable long tokenId) {
-        return ApiResponse.ok(nftService.getNftInfo(tokenId));
+        var info = nftService.getNftInfo(tokenId);
+        if (info == null) {
+            return ApiResponse.error("NFT not found: tokenId=" + tokenId);
+        }
+        return ApiResponse.ok(info);
+    }
+
+    @GetMapping("/total-minted")
+    public ApiResponse<Long> totalMinted() {
+        return ApiResponse.ok(nftService.totalMinted());
     }
 }

@@ -54,8 +54,21 @@ public class NftService {
             var tokenURI = myNFT.tokenURI(BigInteger.valueOf(tokenId)).send();
             return new NftInfo(tokenId, owner, tokenURI);
         } catch (Exception e) {
+            String msg = e.getMessage();
+            if (msg != null && msg.contains("ERC721NonexistentToken")) {
+                return null;
+            }
             log.error("Failed to get NFT info: tokenId={}", tokenId, e);
-            throw new RuntimeException("Failed to get NFT info: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to get NFT info: " + msg, e);
+        }
+    }
+
+    public long totalMinted() {
+        try {
+            return myNFT.totalMinted().send().longValue();
+        } catch (Exception e) {
+            log.error("Failed to get NFT totalMinted", e);
+            throw new RuntimeException("Failed to get NFT totalMinted: " + e.getMessage(), e);
         }
     }
 }
