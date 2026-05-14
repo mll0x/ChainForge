@@ -1,0 +1,26 @@
+import { MintNftForm } from "@/components/MintNftForm";
+import { NftGallery } from "@/components/NftGallery";
+
+export default function NftPage() {
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold tracking-tight">NFT 铸造与展示</h1>
+
+      <div className="grid md:grid-cols-[320px_1fr] gap-6">
+        <div className="rounded-xl border border-border bg-surface p-5 space-y-3 self-start">
+          <h2 className="text-sm font-semibold text-brand uppercase tracking-wider">
+            铸造 NFT
+          </h2>
+          <MintNftForm />
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold text-muted uppercase tracking-wider">
+            NFT 收藏
+          </h2>
+          <NftGallery />
+        </div>
+      </div>
+    </div>
+  );
+}
