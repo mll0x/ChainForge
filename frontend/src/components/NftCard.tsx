@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { NftInfo } from "@/hooks/useNftList";
 
 interface NftCardProps {
@@ -17,26 +17,22 @@ export function NftCard({ nft }: NftCardProps) {
   const [metadata, setMetadata] = useState<NftMetadata | null>(null);
   const [imgError, setImgError] = useState(false);
 
-  const loadMetadata = async () => {
-    if (metadata || !nft.tokenURI) return;
-    try {
-      const res = await fetch(nft.tokenURI);
-      if (res.ok) {
-        const data = await res.json();
-        setMetadata(data);
-      }
-    } catch {
-      // tokenURI not accessible, keep placeholder
-    }
-  };
+  useEffect(() => {
+    if (!nft.tokenURI) return;
+    let cancelled = false;
+    fetch(nft.tokenURI)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setMetadata(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [nft.tokenURI]);
 
   const imageSrc = metadata?.image && !imgError ? metadata.image : null;
 
   return (
-    <div
-      className="rounded-xl border border-border bg-surface overflow-hidden group hover:border-brand/50 hover:shadow-md transition-all"
-      onMouseEnter={loadMetadata}
-    >
+    <div className="rounded-xl border border-border bg-surface overflow-hidden group hover:border-brand/50 hover:shadow-md transition-all">
       <div className="aspect-square bg-white flex items-center justify-center relative overflow-hidden">
         {imageSrc ? (
           <img

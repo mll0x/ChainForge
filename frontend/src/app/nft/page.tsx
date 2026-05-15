@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { MintNftForm } from "@/components/MintNftForm";
 import { NftGallery } from "@/components/NftGallery";
+import { SetBaseURIForm } from "@/components/SetBaseURIForm";
 
 export default function NftPage() {
   const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export default function NftPage() {
             铸造 NFT
           </h2>
           <MintNftForm onMintSuccess={handleMintSuccess} />
+          <SetBaseURIForm />
         </div>
 
         <div className="space-y-4">
