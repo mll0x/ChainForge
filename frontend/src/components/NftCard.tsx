@@ -18,16 +18,16 @@ export function NftCard({ nft }: NftCardProps) {
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
-    if (!nft.tokenURI) return;
     let cancelled = false;
-    fetch(nft.tokenURI)
+    // 优先从本地元数据 API 获取（支持用户上传的图片）
+    fetch(`/api/nft/${nft.tokenId}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!cancelled && data) setMetadata(data);
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [nft.tokenURI]);
+  }, [nft.tokenId]);
 
   const imageSrc = metadata?.image && !imgError ? metadata.image : null;
 
