@@ -1,21 +1,62 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
-import { api, type WalletBalance } from "@/lib/api";
+import { useReadContracts, useBalance, useAccount } from "wagmi";
+import { formatEther } from "viem";
+import { MYTOKEN_ADDRESS, MYTOKEN_ABI } from "@/lib/contracts";
+
+export interface TokenBalanceData {
+  address: string;
+  ethBalance: string;
+  tokenBalance: string;
+  tokenSymbol: string;
+}
 
 export function useTokenBalance() {
   const { address, isConnected } = useAccount();
 
-  return useQuery<WalletBalance | null>({
-    queryKey: ["balance", address],
-    queryFn: async () => {
-      if (!address) return null;
-      const res = await api.getBalance(address);
-      if (!res.success) throw new Error(res.error ?? "Unknown error");
-      return res.data;
+  const { data: ethData } = useBalance({
+    address,
+    query: {
+      enabled: isConnected && !!address,
+      refetchInterval: 10_000,
     },
-    enabled: isConnected && !!address,
-    refetchInterval: 10_000,
   });
+
+  const { data, isLoading, error, refetch } = useReadContracts({
+    contracts: [
+      {
+        address: MYTOKEN_ADDRESS,
+        abi: MYTOKEN_ABI,
+        functionName: "balanceOf" as const,
+        args: [address!],
+      },
+      {
+        address: MYTOKEN_ADDRESS,
+        abi: MYTOKEN_ABI,
+        functionName: "symbol" as const,
+      },
+    ],
+    query: {
+      enabled: isConnected && !!address,
+      refetchInterval: 10_000,
+    },
+  });
+
+  const tokenBalance =
+    data?.[0]?.result != null ? formatEther(data[0].result as bigint) : "0";
+  const tokenSymbol = (data?.[1]?.result as string) ?? "CFT";
+
+  return {
+    data: address
+      ? {
+          address,
+          ethBalance: ethData ? formatEther(ethData.value) : "0",
+          tokenBalance,
+          tokenSymbol,
+        }
+      : null,
+    isLoading,
+    error,
+    refetch,
+  };
 }

@@ -1,7 +1,17 @@
+"use client";
+
+import { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { MintNftForm } from "@/components/MintNftForm";
 import { NftGallery } from "@/components/NftGallery";
 
 export default function NftPage() {
+  const queryClient = useQueryClient();
+
+  const handleMintSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["readContract"] });
+  }, [queryClient]);
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">NFT 铸造与展示</h1>
@@ -11,7 +21,7 @@ export default function NftPage() {
           <h2 className="text-sm font-semibold text-brand uppercase tracking-wider">
             铸造 NFT
           </h2>
-          <MintNftForm />
+          <MintNftForm onMintSuccess={handleMintSuccess} />
         </div>
 
         <div className="space-y-4">

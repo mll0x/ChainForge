@@ -1,30 +1,19 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import { useNftList } from "@/hooks/useNftList";
-import { api } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useTotalMinted, useNftList } from "@/hooks/useNftList";
 import { NftCard } from "./NftCard";
 
 export function NftGallery() {
   const { isConnected } = useAccount();
 
-  const { data: totalMinted } = useQuery({
-    queryKey: ["nftTotalMinted"],
-    queryFn: async () => {
-      const res = await api.getTotalMinted();
-      if (!res.success || res.data == null) return 0;
-      return res.data;
-    },
-    enabled: isConnected,
-    refetchInterval: 10_000,
-  });
+  const { data: totalMinted } = useTotalMinted();
 
-  const tokenIds = totalMinted
-    ? Array.from({ length: totalMinted }, (_, i) => i)
+  const tokenIds = totalMinted != null
+    ? Array.from({ length: Number(totalMinted) }, (_, i) => i)
     : [];
 
-  const { data: nfts, isLoading } = useNftList(tokenIds);
+  const { data: nfts, isLoading } = useNftList(isConnected ? tokenIds : []);
 
   if (!isConnected) {
     return (

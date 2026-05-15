@@ -1,3 +1,5 @@
+"use client";
+
 import { WalletCard } from "@/components/WalletCard";
 import { TransferForm } from "@/components/TransferForm";
 import { ApproveForm } from "@/components/ApproveForm";

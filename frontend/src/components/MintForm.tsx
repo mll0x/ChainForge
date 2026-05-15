@@ -1,42 +1,58 @@
 "use client";
 
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
-import { api } from "@/lib/api";
+import { useState, useEffect, useRef } from "react";
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
+import { parseEther } from "viem";
+import { MYTOKEN_ADDRESS, MYTOKEN_ABI } from "@/lib/contracts";
+import { isValidEthAddress } from "@/lib/validation";
+import { TransactionStatus } from "./TransactionStatus";
 
 export function MintForm() {
   const { address } = useAccount();
-  const queryClient = useQueryClient();
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
-  const [status, setStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
-  const [txHash, setTxHash] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [inputError, setInputError] = useState("");
+  const prevSuccess = useRef(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const { data: hash, error, writeContract, isPending } = useWriteContract();
+  const { isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  useEffect(() => {
+    if (isSuccess && !prevSuccess.current) {
+      setTo("");
+      setAmount("");
+      setInputError("");
+      prevSuccess.current = true;
+    }
+    if (!isSuccess) {
+      prevSuccess.current = false;
+    }
+  }, [isSuccess]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const target = to || address;
     if (!target) return;
-    setStatus("pending");
-    setErrorMsg("");
-    try {
-      const res = await api.mintToken(target, Number(amount));
-      if (res.success && res.data) {
-        setStatus("success");
-        setTxHash(res.data.transactionHash);
-        setTo("");
-        setAmount("");
-        queryClient.invalidateQueries({ queryKey: ["balance"] });
-      } else {
-        setStatus("error");
-        setErrorMsg(res.error || "增发失败");
-      }
-    } catch {
-      setStatus("error");
-      setErrorMsg("请求失败");
+    if (to && !isValidEthAddress(to)) {
+      setInputError("无效的以太坊地址");
+      return;
     }
+    setInputError("");
+    writeContract({
+      address: MYTOKEN_ADDRESS,
+      abi: MYTOKEN_ABI,
+      functionName: "mint",
+      args: [target as `0x${string}`, parseEther(amount)],
+    });
   };
+
+  const walletError = error
+    ? error.message.includes("UserRejected")
+      ? "用户拒绝了交易"
+      : error.message.includes("OwnableUnauthorizedAccount")
+        ? "无权增发 (仅 Owner)"
+        : "交易失败"
+    : "";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
@@ -44,7 +60,10 @@ export function MintForm() {
         type="text"
         placeholder={`目标地址 (默认: 当前钱包)`}
         value={to}
-        onChange={(e) => setTo(e.target.value)}
+        onChange={(e) => {
+          setTo(e.target.value);
+          setInputError("");
+        }}
         className="w-full rounded-lg bg-white border border-border px-3 py-2 text-sm placeholder-muted focus:border-brand focus:outline-none"
       />
       <input
@@ -58,19 +77,14 @@ export function MintForm() {
       />
       <button
         type="submit"
-        disabled={status === "pending"}
+        disabled={isPending}
         className="w-full rounded-lg bg-brand text-white font-semibold py-2 text-sm hover:bg-brand-hover disabled:opacity-50 transition-colors"
       >
-        {status === "pending" ? "处理中..." : "增发 Token"}
+        {isPending ? "确认钱包..." : "增发 Token"}
       </button>
-      {status === "success" && (
-        <p className="text-green-600 text-xs">
-          增发成功! TX: {txHash.slice(0, 10)}...
-        </p>
-      )}
-      {status === "error" && (
-        <p className="text-red-500 text-xs">{errorMsg}</p>
-      )}
+      {inputError && <p className="text-red-500 text-xs">{inputError}</p>}
+      {walletError && <p className="text-red-500 text-xs">{walletError}</p>}
+      <TransactionStatus hash={hash} />
     </form>
   );
 }
