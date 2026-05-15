@@ -72,6 +72,14 @@ ChainForge/
 │       └── lib/        # Wagmi 配置 + 合约 ABI + 地址
 └── README.md
 ```
+## 整体效果预览
+
+首页
+![alt text](18a5f4a40a129133d2cfe690d795a5d6.png)
+token操作
+![alt text](17ed4f50441a3f9f7928ee441307f829.png)
+NFT铸造
+![alt text](eb46492578aeefa904a340c7d66a715d.png)
 
 ## 快速开始
 
