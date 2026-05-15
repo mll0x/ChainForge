@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# nft uploads (local dev)
+.nft-data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
