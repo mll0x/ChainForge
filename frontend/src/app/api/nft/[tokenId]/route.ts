@@ -39,13 +39,20 @@ export async function GET(
   const { tokenId } = await params;
   const id = Number(tokenId);
 
+  const host = _request.headers.get("host") || "localhost:3000";
+  const protocol = _request.headers.get("x-forwarded-proto") || "http";
+
   // 优先返回用户上传的元数据
   const stored = getMetadata(id);
   if (stored) {
+    // 将相对路径转为完整 URL，供 MetaMask 等外部客户端访问
+    const imageUrl = stored.imageUrl.startsWith("/")
+      ? `${protocol}://${host}${stored.imageUrl}`
+      : stored.imageUrl;
     return NextResponse.json({
       name: stored.name,
       description: stored.description,
-      image: stored.imageUrl,
+      image: imageUrl,
       attributes: [
         { trait_type: "Token ID", value: id },
         { trait_type: "Collection", value: "ChainForge" },
