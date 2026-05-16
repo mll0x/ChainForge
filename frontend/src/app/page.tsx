@@ -14,7 +14,7 @@ export default function Home() {
 
       <WalletCard />
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <a
           href="/token"
           className="rounded-xl border border-border bg-surface p-6 hover:border-brand/50 hover:shadow-md transition-all group"
@@ -32,6 +32,15 @@ export default function Home() {
             NFT 铸造
           </h2>
           <p className="text-sm text-muted mt-1">铸造和展示 ERC-721 NFT</p>
+        </a>
+        <a
+          href="/amm"
+          className="rounded-xl border border-brand/30 bg-brand/5 p-6 hover:border-brand/60 hover:shadow-md transition-all group"
+        >
+          <h2 className="text-lg font-semibold group-hover:text-brand transition-colors">
+            AMM 兑换
+          </h2>
+          <p className="text-sm text-muted mt-1">简化版 DEX：添加流动性、Swap、移除</p>
         </a>
       </div>
     </div>

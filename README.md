@@ -1,6 +1,6 @@
 # ChainForge — 链上锻造
 
-> Java 开发者的 Web3 入门实战：发行 ERC-20 Token + 铸造 ERC-721 NFT
+> Java 开发者的 Web3 入门实战：ERC-20 Token + ERC-721 NFT + AMM DEX
 
 ## 项目简介
 
@@ -8,6 +8,7 @@
 
 - 发行自定义 **ERC-20 Token**（同质化代币）
 - 铸造 **ERC-721 NFT**（非同质化代币）
+- **SimpleAMM** — 简化版 DEX（基于 Uniswap V2 恒定乘积公式 x\*y=k）
 - **Java 后端**（Spring Boot + Web3j）与链交互
 - **React 前端**（Wagmi + RainbowKit）连接钱包、链上交易
 
@@ -24,8 +25,8 @@
         ▼              ▼        ▼        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                  Ethereum (Hardhat / Sepolia)                │
-│   MyToken (ERC-20)              MyNFT (ERC-721)             │
-│   transfer / approve / mint     mint / batchMint / tokenURI │
+│   MyToken (ERC-20)         MyNFT (ERC-721)      SimpleAMM  │
+│   transfer/approve/mint    mint/batchMint/URI    addLiq/swap│
 └─────────────────────────────────────────────────────────────┘
         ▲
         │ REST API (余额查询 / 事件监听)
@@ -52,10 +53,12 @@
 ChainForge/
 ├── contracts/          # Solidity 智能合约 (Hardhat 项目)
 │   ├── src/
-│   │   ├── MyToken.sol # ERC-20 Token 合约
-│   │   └── MyNFT.sol   # ERC-721 NFT 合约
-│   ├── test/           # 合约测试 (30 个测试全部通过)
+│   │   ├── MyToken.sol    # ERC-20 Token 合约
+│   │   ├── MyNFT.sol      # ERC-721 NFT 合约
+│   │   └── SimpleAMM.sol  # 简化版 AMM (恒定乘积 x*y=k)
+│   ├── test/           # 合约测试 (57 个测试全部通过)
 │   ├── ignition/       # Hardhat Ignition 部署模块
+│   └── scripts/        # 部署脚本 (deploy-amm.ts)
 │   └── hardhat.config.ts
 ├── backend/            # Java 后端 (Spring Boot + Web3j)
 │   └── src/main/java/com/chainforge/
@@ -68,7 +71,7 @@ ChainForge/
 │   └── src/
 │       ├── app/        # 页面路由 + NFT 元数据 API
 │       ├── components/ # 组件 (WalletCard, TransferForm, NftGallery...)
-│       ├── hooks/      # 自定义 Hooks (useTokenBalance, useNftList)
+│       ├── hooks/      # 自定义 Hooks (useTokenBalance, useNftList, useAMM)
 │       └── lib/        # Wagmi 配置 + 合约 ABI + 地址
 └── README.md
 ```
@@ -101,10 +104,15 @@ npx hardhat node
 
 ```bash
 cd contracts
+
+# 部署 ERC-20 + ERC-721
 npx hardhat ignition deploy ignition/modules/ChainForge.ts --network localhost
+
+# 部署 SimpleAMM + 两个 ERC-20 代币 + 添加初始流动性
+npx hardhat run scripts/deploy-amm.ts --network localhost
 ```
 
-部署后会输出合约地址，更新 `backend/src/main/resources/application.yml` 中的地址。
+部署后会输出合约地址，更新 `backend/src/main/resources/application.yml` 和 `frontend/.env.local` 中的地址。
 
 ### 3. 启动后端（可选 — 前端链上交易不依赖后端）
 
@@ -165,6 +173,7 @@ CONTRACT_MY_NFT=0x_DEPLOYED_NFT_ADDRESS
 # frontend/.env.local
 NEXT_PUBLIC_MYTOKEN_ADDRESS=0x_DEPLOYED_TOKEN_ADDRESS
 NEXT_PUBLIC_MYNFT_ADDRESS=0x_DEPLOYED_NFT_ADDRESS
+NEXT_PUBLIC_SIMPLEAMM_ADDRESS=0x_DEPLOYED_AMM_ADDRESS
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=YOUR_WALLETCONNECT_PROJECT_ID
 ```
 
@@ -179,9 +188,10 @@ npx hardhat ignition verify chainforge-latest --network sepolia
 
 | 页面 | 路径 | 功能 |
 |------|------|------|
-| 首页 | `/` | 钱包连接 + 导航卡片（Token / NFT） |
+| 首页 | `/` | 钱包连接 + 导航卡片（Token / NFT / AMM） |
 | Token | `/token` | 链上转账、授权、增发（MetaMask 签名） |
 | NFT | `/nft` | 链上铸造 + 画廊展示 + 元数据图片 |
+| AMM | `/amm` | 添加流动性 / Swap / 移除流动性（交互式 DEX） |
 
 ### 核心组件
 
@@ -196,6 +206,17 @@ npx hardhat ignition verify chainforge-latest --network sepolia
 | `NftCard` | NFT 卡片 + 元数据图片懒加载 |
 | `TransactionStatus` | 交易 pending/成功状态 + Etherscan 链接 |
 | `Providers` | Wagmi + RainbowKit + React Query Provider |
+
+### AMM 页面组件
+
+| 组件 | 说明 |
+|------|------|
+| `PoolOverview` | 池状态总览：储备量、LP 供应、价格、k 值 + x\*y=k 原理说明 |
+| `AddLiquidityForm` | 添加流动性：自动计算比例、Approve 门控、MAX 按钮 |
+| `SwapForm` | 代币兑换：A↔B 切换、实时报价、滑点设置、价格冲击显示 |
+| `RemoveLiquidityForm` | 移除流动性：百分比快捷按钮（25/50/75/100%）、预估返回量 |
+| `FlowDiagram` | AMM 架构图 + 操作流程 ASCII 图 |
+| `ApproveGate` | 自动检测授权额度，需要时显示 Approve 按钮 |
 
 ### 支持网络
 
@@ -227,6 +248,26 @@ npx hardhat ignition verify chainforge-latest --network sepolia
 | `maxSupply()` | 只读 | 查询最大供应量 |
 
 > 合约测试：17 个测试全部通过
+
+### SimpleAMM (简化版 AMM)
+
+基于 Uniswap V2 恒定乘积公式 `x * y = k`，无手续费。
+
+| 方法 | 权限 | 说明 |
+|------|------|------|
+| `addLiquidity(uint256 amountA, uint256 amountB)` | 任意持有者 | 添加流动性，铸造 LP Token |
+| `removeLiquidity(uint256 lpAmount)` | LP 持有者 | 销毁 LP Token，取回两种代币 |
+| `swap(address tokenIn, uint256 amountIn, uint256 amountOutMin)` | 任意持有者 | 代币兑换（含滑点保护） |
+| `getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)` | 只读 | 计算兑换输出量 |
+| `reserveA() / reserveB()` | 只读 | 查询储备量 |
+| `totalSupply()` | 只读 | LP Token 总供应量 |
+
+**核心公式：**
+- 首次添加流动性：`LP = sqrt(amountA * amountB)`
+- 后续添加：`LP = min(amountA/reserveA, amountB/reserveB) * totalSupply`
+- Swap 定价：`amountOut = reserveOut * amountIn / (reserveIn + amountIn)`
+
+> 合约测试：27 个测试全部通过
 
 ## API 接口
 
@@ -292,6 +333,7 @@ POST /api/token/transfer
 |------|------|
 | MyToken (ERC-20) | `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512` |
 | MyNFT (ERC-721) | `0x5FbDB2315678afecb367f032d93F642f64180aa3` |
+| SimpleAMM | `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` |
 
 > 本地链每次重启后合约地址可能变化，需同步更新 `application.yml`。
 
@@ -315,6 +357,7 @@ POST /api/token/transfer
 | Java 集成 | 第 2 周 | Web3j 连接节点、调用合约、签名交易 | ✅ 已完成 |
 | React 前端 | 第 3 周 | 钱包连接、DApp 交互 | ✅ 已完成 |
 | 整合完善 | 第 4 周 | 链上交易、元数据、部署 | ✅ 已完成 |
+| AMM DEX | 第 8 周 | 简化版 Uniswap V2：恒定乘积 + 流动性 + Swap | ✅ 已完成 |
 
 ## 安全注意事项
 

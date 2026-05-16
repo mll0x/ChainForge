@@ -8,6 +8,7 @@ const links = [
   { href: "/", label: "概览" },
   { href: "/token", label: "Token" },
   { href: "/nft", label: "NFT" },
+  { href: "/amm", label: "AMM" },
 ];
 
 export function NavBar() {
