@@ -25,6 +25,13 @@ export interface AMMPoolData {
   tokenBBalance: string;
   tokenAAllowance: string;
   tokenBAllowance: string;
+  feeTo: string;
+  feeToSetter: string;
+  feeRate: string;
+  kLast: string;
+  price0CumulativeLast: string;
+  price1CumulativeLast: string;
+  blockTimestampLast: number;
 }
 
 export function useAMMPool() {
@@ -38,6 +45,13 @@ export function useAMMPool() {
       { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "reserveB" },
       { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "totalSupply" },
       { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "balanceOf", args: [address!] },
+      { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "feeTo" },
+      { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "feeToSetter" },
+      { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "FEE_NUMERATOR" },
+      { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "kLast" },
+      { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "price0CumulativeLast" },
+      { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "price1CumulativeLast" },
+      { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "blockTimestampLast" },
     ],
     query: {
       enabled: isConnected && !!address,
@@ -51,6 +65,13 @@ export function useAMMPool() {
   const reserveB = (pool?.[3]?.result as bigint) ?? BigInt(0);
   const totalSupply = (pool?.[4]?.result as bigint) ?? BigInt(0);
   const myLP = (pool?.[5]?.result as bigint) ?? BigInt(0);
+  const feeTo = (pool?.[6]?.result as string) ?? ethersZeroAddress;
+  const feeToSetter = (pool?.[7]?.result as string) ?? ethersZeroAddress;
+  const feeNumerator = (pool?.[8]?.result as bigint) ?? BigInt(997);
+  const kLast = (pool?.[9]?.result as bigint) ?? BigInt(0);
+  const price0CumulativeLast = (pool?.[10]?.result as bigint) ?? BigInt(0);
+  const price1CumulativeLast = (pool?.[11]?.result as bigint) ?? BigInt(0);
+  const blockTimestampLast = (pool?.[12]?.result as number) ?? 0;
 
   const { data: tokenData } = useReadContracts({
     contracts: [
@@ -77,6 +98,10 @@ export function useAMMPool() {
   const rA = reserveA > BigInt(0) ? Number(formatEther(reserveA)) : 0;
   const rB = reserveB > BigInt(0) ? Number(formatEther(reserveB)) : 0;
 
+  const feeRate = feeNumerator > BigInt(0)
+    ? ((1 - Number(feeNumerator) / 1000) * 100).toFixed(1)
+    : "0.3";
+
   const data: AMMPoolData | null = address
     ? {
         tokenA,
@@ -94,16 +119,24 @@ export function useAMMPool() {
         tokenBBalance: formatEther(tokenBBalance),
         tokenAAllowance: formatEther(tokenAAllowance),
         tokenBAllowance: formatEther(tokenBAllowance),
+        feeTo,
+        feeToSetter,
+        feeRate,
+        kLast: kLast > BigInt(0) ? formatEther(kLast) : "0",
+        price0CumulativeLast: price0CumulativeLast.toString(),
+        price1CumulativeLast: price1CumulativeLast.toString(),
+        blockTimestampLast: Number(blockTimestampLast),
       }
     : null;
 
   return { data, isLoading, refetch };
 }
 
+const ethersZeroAddress = "0x0000000000000000000000000000000000000000";
+
 export function useAmountOut(amountIn: string, isAToB: boolean) {
   const { address, isConnected } = useAccount();
 
-  // 先读取储备量
   const { data: reserves } = useReadContracts({
     contracts: [
       { address: SIMPLEAMM_ADDRESS, abi: SIMPLEAMM_ABI, functionName: "reserveA" },

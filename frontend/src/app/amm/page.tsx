@@ -168,10 +168,30 @@ function PoolOverview() {
         </div>
       )}
 
+      {/* 手续费信息 */}
+      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
+        <PoolStat label="Swap 手续费" value={`${data.feeRate}%`} highlight />
+        <PoolStat label="协议费" value={data.feeTo !== "0x0000000000000000000000000000000000000000" ? "已开启" : "未开启"} highlight={data.feeTo !== "0x0000000000000000000000000000000000000000"} />
+      </div>
+
+      {/* TWAP 预言机 */}
+      <div className="pt-2 border-t border-border space-y-2">
+        <p className="text-xs font-semibold text-foreground">TWAP 预言机</p>
+        <div className="grid grid-cols-2 gap-3">
+          <PoolStat label={`price0 累积 (${data.tokenBSymbol}/${data.tokenASymbol})`} value={data.price0CumulativeLast !== "0" ? Number(data.price0CumulativeLast).toExponential(4) : "0"} />
+          <PoolStat label={`price1 累积 (${data.tokenASymbol}/${data.tokenBSymbol})`} value={data.price1CumulativeLast !== "0" ? Number(data.price1CumulativeLast).toExponential(4) : "0"} />
+        </div>
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-800 space-y-1">
+          <p className="font-semibold">为什么需要 TWAP？</p>
+          <p>现货价格 (spot price) 可以被单笔交易操纵。TWAP（时间加权平均价格）通过累积价格 ÷ 时间来计算平均值，操纵者必须在长时间内持续交易才能影响价格，成本极高。借贷协议、衍生品等都依赖 TWAP 作为可靠价格源。</p>
+        </div>
+      </div>
+
       {/* 恒定乘积公式说明 */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1">
-        <p className="font-semibold">恒定乘积公式 x &times; y = k</p>
-        <p>每次 swap 后，两种代币储备量的乘积 k 不变（无手续费时）。池中一种代币减少，另一种必然增加，价格由供需自动决定。</p>
+        <p className="font-semibold">恒定乘积公式 x &times; y = k（含手续费）</p>
+        <p>每次 swap 扣除 0.3% 手续费后，剩余部分按恒定乘积定价。手续费留在池中，使 k 值随 swap 增长 — LP 通过持有 LP Token 被动赚取手续费收益。</p>
+        <p>协议费 (feeTo)：若开启，手续费的 1/6 以 LP Token 形式铸给 feeTo 地址，其余 5/6 归所有 LP。</p>
       </div>
     </div>
   );
@@ -466,8 +486,8 @@ function SwapForm() {
   return (
     <SectionCard title="代币兑换" icon="🔄" color="blue">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-1 mb-2">
-        <p className="font-semibold">Swap 原理</p>
-        <p>输入一种代币，AMM 根据恒定乘积公式自动计算你能换到多少另一种代币。池中代币越少，价格越高 — 这就是滑点。</p>
+        <p className="font-semibold">Swap 原理（含 0.3% 手续费）</p>
+        <p>输入一种代币，AMM 扣除 0.3% 手续费后，根据恒定乘积公式计算你能换到多少另一种代币。手续费留在池中，作为 LP 收益。池中代币越少，价格越高 — 这就是滑点。</p>
       </div>
 
       {!hasLiquidity ? (
@@ -566,6 +586,10 @@ function SwapForm() {
                   <span className="font-mono">1 {inSymbol} = {(Number(outAmount) / Number(amountIn)).toFixed(6)} {outSymbol}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span>手续费 (0.3%)</span>
+                  <span className="font-mono">{(Number(amountIn) * 0.003).toFixed(6)} {inSymbol}</span>
+                </div>
+                <div className="flex justify-between">
                   <span>最少收到</span>
                   <span className="font-mono">{Number(minOut).toFixed(6)} {outSymbol}</span>
                 </div>
@@ -615,11 +639,125 @@ function FlowDiagram() {
 
  操作流程:
  1️⃣ 添加流动性: approve → addLiquidity(A, B) → 获得 LP Token
- 2️⃣ 兑换:       approve → swap(tokenIn, amount, minOut) → 收到 tokenOut
+ 2️⃣ 兑换:       approve → swap(tokenIn, amount, minOut) → 收到 tokenOut (扣 0.3% 手续费)
  3️⃣ 移除流动性: removeLiquidity(LP) → 取回 A + B
         `}</pre>
       </div>
     </div>
+  );
+}
+
+// ─── Flash Swap Education ─────────────────────────────────
+
+function FlashSwapInfo() {
+  return (
+    <SectionCard title="闪电兑换 (Flash Swap)" icon="⚡" color="blue">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 space-y-2">
+        <p className="font-semibold">什么是闪电兑换？</p>
+        <p>闪电兑换允许你<strong>先借出代币，在同一笔交易内还款</strong>。如果还款不足，整笔交易自动回滚 — 资金安全。</p>
+        <p className="font-semibold mt-2">核心流程：先拿后还</p>
+        <div className="bg-white rounded-lg p-2 font-mono text-[11px] leading-relaxed border border-blue-100">
+          <pre>{`1. AMM 将 tokenOut 转给你
+2. 如果你提供了 data，AMM 调用你的回调函数
+   → 你可以在回调中做任何事（套利、清算等）
+3. AMM 从你收取 tokenIn（含 0.3% 手续费）
+4. 如果还款不足 → 整笔交易回滚`}</pre>
+        </div>
+        <p className="font-semibold mt-2">典型用例</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li><strong>套利：</strong>从低价池借出代币，在另一个池高价卖出，利润覆盖还款</li>
+          <li><strong>清算：</strong>借出抵押品，清算债务，获利后还款</li>
+          <li><strong>自清算：</strong>借出一种代币来偿还自己的债务</li>
+        </ul>
+        <p className="font-semibold mt-2">与普通 Swap 的区别</p>
+        <p>普通 Swap：你需要先持有 tokenIn 才能兑换。闪电兑换：你<strong>不需要持有 tokenIn</strong>，只要在同一交易中获取到足够的 tokenIn 即可。</p>
+      </div>
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+        <p className="font-semibold">注意</p>
+        <p>闪电兑换需要实现 IAMMCallee 回调接口（即部署一个合约）。前端目前仅展示概念，实际操作需要编写合约代码。你可以在合约测试中体验完整的闪电兑换流程。</p>
+      </div>
+    </SectionCard>
+  );
+}
+
+// ─── Fee Admin ─────────────────────────────────────────────
+
+function FeeAdmin() {
+  const { data: pool, refetch } = useAMMPool();
+  const { address, isConnected } = useAccount();
+  const [feeToInput, setFeeToInput] = useState("");
+  const [hash, setHash] = useState<`0x${string}` | undefined>();
+
+  const { writeContract, isPending } = useWriteContract();
+  const { isSuccess } = useWaitForTransactionReceipt({ hash });
+  const prevSuccess = useRef(false);
+
+  useEffect(() => {
+    if (isSuccess && !prevSuccess.current) {
+      prevSuccess.current = true;
+      setFeeToInput("");
+      refetch();
+    }
+    if (!isSuccess) prevSuccess.current = false;
+  }, [isSuccess, refetch]);
+
+  if (!isConnected || !pool) return null;
+
+  const isFeeToSetter = address?.toLowerCase() === pool.feeToSetter.toLowerCase();
+  const isFeeToEnabled = pool.feeTo !== "0x0000000000000000000000000000000000000000";
+
+  if (!isFeeToSetter) return null;
+
+  return (
+    <SectionCard title="协议费管理" icon="⚙️" color="orange">
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-xs text-orange-800 space-y-1 mb-2">
+        <p className="font-semibold">什么是协议费？</p>
+        <p>开启后，每次 swap 手续费的 1/6（即 0.05%）以 LP Token 形式铸给 feeTo 地址。其余 5/6 归所有 LP。这是 Uniswap V2 的 feeTo 机制。</p>
+        <p>只有 feeToSetter 可以管理此设置。</p>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between bg-white rounded-lg border border-border p-3">
+          <div>
+            <p className="text-sm font-medium">协议费状态</p>
+            <p className="text-xs text-muted mt-0.5">
+              {isFeeToEnabled ? `接收地址: ${pool.feeTo.slice(0, 6)}...${pool.feeTo.slice(-4)}` : "未开启"}
+            </p>
+          </div>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isFeeToEnabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+            {isFeeToEnabled ? "已开启" : "未开启"}
+          </span>
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="feeTo 地址 (设为 0x0...0 关闭)"
+            value={feeToInput}
+            onChange={(e) => setFeeToInput(e.target.value)}
+            className="flex-1 rounded-lg border border-border px-3 py-2 text-sm bg-white"
+          />
+          <button
+            type="button"
+            disabled={isPending || !feeToInput}
+            onClick={() => {
+              const h = writeContract({
+                address: SIMPLEAMM_ADDRESS,
+                abi: SIMPLEAMM_ABI,
+                functionName: "setFeeTo",
+                args: [feeToInput as `0x${string}`],
+              });
+              setHash(h as unknown as `0x${string}`);
+            }}
+            className="rounded-lg bg-orange-600 text-white font-semibold px-4 py-2 text-sm hover:bg-orange-700 disabled:opacity-50 transition-colors"
+          >
+            {isPending ? "确认..." : "设置"}
+          </button>
+        </div>
+
+        <TransactionStatus hash={hash} />
+      </div>
+    </SectionCard>
   );
 }
 
@@ -636,7 +774,7 @@ export default function AMMPage() {
           <span className="text-brand">AMM</span> 去中心化交易所
         </h1>
         <p className="text-sm text-muted">
-          基于 Uniswap V2 恒定乘积公式 (x &times; y = k) 的简化版自动做市商 — 无手续费
+          基于 Uniswap V2 恒定乘积公式 (x &times; y = k) 的简化版自动做市商 — 含 0.3% Swap 手续费
         </p>
       </div>
 
@@ -666,6 +804,10 @@ export default function AMMPage() {
           </div>
 
           <RemoveLiquidityForm />
+
+          <FlashSwapInfo />
+
+          <FeeAdmin />
         </>
       )}
     </div>
