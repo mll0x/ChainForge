@@ -9,6 +9,13 @@ export const MYNFT_ADDRESS =
 
 export const MYTOKEN_ABI = [
   {
+    inputs: [],
+    name: "name",
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       { name: "owner", type: "address" },
       { name: "spender", type: "address" },
@@ -81,6 +88,28 @@ export const MYTOKEN_ABI = [
     name: "transfer",
     outputs: [{ name: "", type: "bool" }],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "v", type: "uint8" },
+      { name: "r", type: "bytes32" },
+      { name: "s", type: "bytes32" },
+    ],
+    name: "permit",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "owner", type: "address" }],
+    name: "nonces",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
     type: "function",
   },
 ] as const satisfies Abi;
@@ -188,57 +217,15 @@ export const SIMPLEAMM_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      { name: "amountIn", type: "uint256" },
-      { name: "reserveIn", type: "uint256" },
-      { name: "reserveOut", type: "uint256" },
-    ],
-    name: "getAmountOut",
-    outputs: [{ name: "", type: "uint256" }],
-    stateMutability: "pure",
-    type: "function",
-  },
-  {
-    inputs: [
-      { name: "amountA", type: "uint256" },
-      { name: "amountB", type: "uint256" },
-    ],
-    name: "addLiquidity",
-    outputs: [{ name: "liquidity", type: "uint256" }],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ name: "liquidity", type: "uint256" }],
-    name: "removeLiquidity",
-    outputs: [
-      { name: "amountA", type: "uint256" },
-      { name: "amountB", type: "uint256" },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { name: "tokenIn", type: "address" },
-      { name: "amountIn", type: "uint256" },
-      { name: "amountOutMin", type: "uint256" },
-    ],
-    name: "swap",
-    outputs: [{ name: "amountOut", type: "uint256" }],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ name: "account", type: "address" }],
-    name: "balanceOf",
+    inputs: [],
+    name: "totalSupply",
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
-    inputs: [],
-    name: "totalSupply",
+    inputs: [{ name: "account", type: "address" }],
+    name: "balanceOf",
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
@@ -276,6 +263,13 @@ export const SIMPLEAMM_ABI = [
   },
   {
     inputs: [],
+    name: "pendingFeeToSetter",
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "kLast",
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
@@ -289,28 +283,17 @@ export const SIMPLEAMM_ABI = [
     type: "function",
   },
   {
-    inputs: [{ name: "feeTo_", type: "address" }],
-    name: "setFeeTo",
-    outputs: [],
-    stateMutability: "nonpayable",
+    inputs: [],
+    name: "MINIMUM_LIQUIDITY",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
     type: "function",
   },
   {
-    inputs: [{ name: "feeToSetter_", type: "address" }],
-    name: "setFeeToSetter",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { name: "tokenOut", type: "address" },
-      { name: "amountOut", type: "uint256" },
-      { name: "data", type: "bytes" },
-    ],
-    name: "flashSwap",
-    outputs: [],
-    stateMutability: "nonpayable",
+    inputs: [],
+    name: "paused",
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -336,12 +319,151 @@ export const SIMPLEAMM_ABI = [
   },
   {
     inputs: [
+      { name: "amountIn", type: "uint256" },
+      { name: "reserveIn", type: "uint256" },
+      { name: "reserveOut", type: "uint256" },
+    ],
+    name: "getAmountOut",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [
       { name: "token", type: "address" },
       { name: "secondsAgo", type: "uint256" },
     ],
     name: "consult",
     outputs: [{ name: "priceAverage", type: "uint256" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "amountA", type: "uint256" },
+      { name: "amountB", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+    ],
+    name: "addLiquidity",
+    outputs: [{ name: "liquidity", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "amountA", type: "uint256" },
+      { name: "amountB", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "v", type: "uint8" },
+      { name: "r", type: "bytes32" },
+      { name: "s", type: "bytes32" },
+      { name: "permitDeadline", type: "uint256" },
+    ],
+    name: "addLiquidityWithPermit",
+    outputs: [{ name: "liquidity", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "liquidity", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+    ],
+    name: "removeLiquidity",
+    outputs: [
+      { name: "amountA", type: "uint256" },
+      { name: "amountB", type: "uint256" },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "tokenIn", type: "address" },
+      { name: "amountIn", type: "uint256" },
+      { name: "amountOutMin", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+    ],
+    name: "swap",
+    outputs: [{ name: "amountOut", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "tokenIn", type: "address" },
+      { name: "amountIn", type: "uint256" },
+      { name: "amountOutMin", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+      { name: "v", type: "uint8" },
+      { name: "r", type: "bytes32" },
+      { name: "s", type: "bytes32" },
+      { name: "permitDeadline", type: "uint256" },
+    ],
+    name: "swapWithPermit",
+    outputs: [{ name: "amountOut", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "tokenOut", type: "address" },
+      { name: "amountOut", type: "uint256" },
+      { name: "data", type: "bytes" },
+      { name: "deadline", type: "uint256" },
+    ],
+    name: "flashSwap",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "feeTo_", type: "address" }],
+    name: "setFeeTo",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "newSetter", type: "address" }],
+    name: "proposeFeeToSetter",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "acceptFeeToSetter",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "pause",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "unpause",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "sync",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "to", type: "address" }],
+    name: "skim",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -381,19 +503,69 @@ export const SIMPLEAMM_ABI = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, name: "oldFeeTo", type: "address" },
-      { indexed: true, name: "newFeeTo", type: "address" },
+      { indexed: false, name: "reserveA", type: "uint256" },
+      { indexed: false, name: "reserveB", type: "uint256" },
     ],
-    name: "FeeToChanged",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: "oldSetter", type: "address" },
-      { indexed: true, name: "newSetter", type: "address" },
-    ],
-    name: "FeeToSetterChanged",
+    name: "Sync",
     type: "event",
   },
 ] as const satisfies Abi;
+
+export const ROUTER_ADDRESS =
+  (process.env.NEXT_PUBLIC_ROUTER_ADDRESS as `0x${string}`) ??
+  "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6";
+
+export const ROUTER_ABI = [
+  {
+    inputs: [
+      { name: "tokenA", type: "address" },
+      { name: "tokenB", type: "address" },
+      { name: "pair", type: "address" },
+    ],
+    name: "addPool",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "tokenA", type: "address" }, { name: "tokenB", type: "address" }],
+    name: "pairFor",
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "poolCount",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "amountIn", type: "uint256" },
+      { name: "path", type: "address[]" },
+    ],
+    name: "getAmountsOut",
+    outputs: [{ name: "amounts", type: "uint256[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "amountIn", type: "uint256" },
+      { name: "amountOutMin", type: "uint256" },
+      { name: "path", type: "address[]" },
+      { name: "to", type: "address" },
+      { name: "deadline", type: "uint256" },
+    ],
+    name: "swapExactTokensForTokens",
+    outputs: [{ name: "amounts", type: "uint256[]" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const satisfies Abi;
+
+export function getDeadline(minutes = 20): bigint {
+  return BigInt(Math.floor(Date.now() / 1000) + 60 * minutes);
+}

@@ -2,16 +2,17 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title MyToken
- * @dev ChainForge ERC-20 Token
+ * @dev ChainForge ERC-20 Token with EIP-2612 Permit
  *
+ * Permit 允许用户通过链下签名完成授权，无需发送单独的 approve 交易。
  * 所有数量参数均为原始数量（不含 decimals），合约内部自动处理精度。
- * 例如传入 1000 表示 1000 个 Token，合约内部存储为 1000 * 10^18。
  */
-contract MyToken is ERC20, Ownable {
+contract MyToken is ERC20Permit, Ownable {
     uint256 private _maxSupply;
 
     constructor(
@@ -19,7 +20,7 @@ contract MyToken is ERC20, Ownable {
         string memory symbol_,
         uint256 initialSupply_,
         uint256 maxSupply_
-    ) ERC20(name_, symbol_) Ownable(msg.sender) {
+    ) ERC20(name_, symbol_) ERC20Permit(name_) Ownable(msg.sender) {
         require(maxSupply_ == 0 || initialSupply_ <= maxSupply_, "Initial supply exceeds max");
         _maxSupply = maxSupply_ * 10 ** decimals();
 

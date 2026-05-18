@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseEther, formatEther, maxUint256 } from "viem";
-import { SIMPLEAMM_ADDRESS, SIMPLEAMM_ABI, MYTOKEN_ADDRESS, MYTOKEN_ABI } from "@/lib/contracts";
+import { SIMPLEAMM_ADDRESS, SIMPLEAMM_ABI, MYTOKEN_ADDRESS, MYTOKEN_ABI, getDeadline } from "@/lib/contracts";
 import { useAMMPool, useAmountOut } from "@/hooks/useAMM";
+import { usePermit } from "@/hooks/usePermit";
 import { TransactionStatus } from "@/components/TransactionStatus";
 
 // ─── Shared ───────────────────────────────────────────────
@@ -276,7 +277,7 @@ function AddLiquidityForm() {
             address: SIMPLEAMM_ADDRESS,
             abi: SIMPLEAMM_ABI,
             functionName: "addLiquidity",
-            args: [parseEther(amountA), parseEther(amountB)],
+            args: [parseEther(amountA), parseEther(amountB), getDeadline()],
           });
           setHash(h as unknown as `0x${string}`);
         }}
@@ -377,7 +378,7 @@ function RemoveLiquidityForm() {
               address: SIMPLEAMM_ADDRESS,
               abi: SIMPLEAMM_ABI,
               functionName: "removeLiquidity",
-              args: [parseEther(lpAmount)],
+              args: [parseEther(lpAmount), getDeadline()],
             });
             setHash(h as unknown as `0x${string}`);
           }}
@@ -443,7 +444,17 @@ function SwapForm() {
   const [isAToB, setIsAToB] = useState(true);
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [slippage, setSlippage] = useState("0.5");
+  const [usePermitMode, setUsePermitMode] = useState(false);
   const prevSuccess = useRef(false);
+
+  const inToken = isAToB ? MYTOKEN_ADDRESS : (pool?.tokenB as `0x${string}`);
+  const deadline = getDeadline();
+  const { signPermit, isReady } = usePermit(
+    inToken,
+    SIMPLEAMM_ADDRESS,
+    amountIn && !isNaN(Number(amountIn)) ? parseEther(amountIn) : BigInt(0),
+    deadline
+  );
 
   const { writeContract, isPending, error } = useWriteContract();
   const { isSuccess } = useWaitForTransactionReceipt({ hash });
@@ -466,7 +477,6 @@ function SwapForm() {
   const inSymbol = isAToB ? pool.tokenASymbol : pool.tokenBSymbol;
   const outSymbol = isAToB ? pool.tokenBSymbol : pool.tokenASymbol;
   const inBalance = isAToB ? pool.tokenABalance : pool.tokenBBalance;
-  const inToken = isAToB ? MYTOKEN_ADDRESS : (pool.tokenB as `0x${string}`);
   const outAmount = amountOut ? formatEther(amountOut) : "0";
   const slippagePct = Number(slippage) || 0;
   const minOut = Number(outAmount) > 0 ? (Number(outAmount) * (1 - slippagePct / 100)).toFixed(18) : "0";
@@ -494,16 +504,28 @@ function SwapForm() {
         <p className="text-sm text-muted text-center py-4">池中暂无流动性，请先添加流动性</p>
       ) : (
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             if (!amountIn || Number(amountIn) <= 0) return;
-            const h = writeContract({
-              address: SIMPLEAMM_ADDRESS,
-              abi: SIMPLEAMM_ABI,
-              functionName: "swap",
-              args: [inToken, parseEther(amountIn), parseEther(minOut)],
-            });
-            setHash(h as unknown as `0x${string}`);
+            if (usePermitMode) {
+              const permit = await signPermit();
+              if (!permit) return;
+              const h = writeContract({
+                address: SIMPLEAMM_ADDRESS,
+                abi: SIMPLEAMM_ABI,
+                functionName: "swapWithPermit",
+                args: [inToken, parseEther(amountIn), parseEther(minOut), deadline, permit.v, permit.r, permit.s, permit.deadline],
+              });
+              setHash(h as unknown as `0x${string}`);
+            } else {
+              const h = writeContract({
+                address: SIMPLEAMM_ADDRESS,
+                abi: SIMPLEAMM_ABI,
+                functionName: "swap",
+                args: [inToken, parseEther(amountIn), parseEther(minOut), deadline],
+              });
+              setHash(h as unknown as `0x${string}`);
+            }
           }}
           className="space-y-3"
         >
@@ -605,8 +627,22 @@ function SwapForm() {
             )}
           </div>
 
+          <div className="flex items-center gap-2">
+            <input
+              id="permit"
+              type="checkbox"
+              checked={usePermitMode}
+              onChange={(e) => setUsePermitMode(e.target.checked)}
+              disabled={!isReady}
+              className="rounded border-border text-brand focus:ring-brand"
+            />
+            <label htmlFor="permit" className="text-xs text-muted cursor-pointer select-none">
+              使用 Permit 免授权 {isReady ? "" : "(加载中...)"}
+            </label>
+          </div>
+
           <TxButton isPending={isPending} disabled={!amountIn || Number(amountIn) <= 0}>
-            Swap {inSymbol} → {outSymbol}
+            {usePermitMode ? "Permit Swap" : "Swap"} {inSymbol} → {outSymbol}
           </TxButton>
           {txError && <p className="text-red-500 text-xs">{txError}</p>}
           <TransactionStatus hash={hash} />

@@ -24,11 +24,13 @@ async function main() {
   const ammAddr = await amm.getAddress();
   console.log("SimpleAMM 部署成功:", ammAddr);
 
+  const deadline = Math.floor(Date.now() / 1000) + 3600;
+
   // 添加初始流动性
   console.log("\n--- 添加初始流动性 (1000 TKA : 2000 TKB) ---");
   await TokenA.approve(ammAddr, ethers.parseUnits("1000", 18));
   await TokenB.approve(ammAddr, ethers.parseUnits("2000", 18));
-  const addLiqTx = await amm.addLiquidity(ethers.parseUnits("1000", 18), ethers.parseUnits("2000", 18));
+  const addLiqTx = await amm.addLiquidity(ethers.parseUnits("1000", 18), ethers.parseUnits("2000", 18), deadline);
   await addLiqTx.wait();
   console.log("添加流动性成功!");
 
@@ -42,7 +44,7 @@ async function main() {
   // 测试 swap
   console.log("\n--- 测试 Swap: 10 TKA → TKB ---");
   await TokenA.approve(ammAddr, ethers.parseUnits("10", 18));
-  const swapTx = await amm.swap(tokenAAddr, ethers.parseUnits("10", 18), 0);
+  const swapTx = await amm.swap(tokenAAddr, ethers.parseUnits("10", 18), 0, deadline);
   await swapTx.wait();
   console.log("Swap 成功!");
 
